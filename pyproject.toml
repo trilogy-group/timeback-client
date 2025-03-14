@@ -1,7 +1,7 @@
 [project]
 name = "timeback-client"
-version = "0.1.0"
-description = "Simple client for TimeBack API"
+version = "0.1.1"
+description = "A Python client for the TimeBack API (OneRoster 1.2 implementation)"
 authors = [
     {name = "Amanda Shipka"}
 ]
@@ -13,13 +13,25 @@ dependencies = [
 ]
 
 [tool.poetry]
-packages = [
-    { include = "timeback_client", from = "src" }
-]
+name = "timeback-client"
+version = "0.1.1"
+description = "A Python client for the TimeBack API (OneRoster 1.2 implementation)"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+packages = [{include = "timeback_client", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+requests = "^2.31.0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.3.5"
+pytest = "^8.0.0"
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api" 
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks tests that connect to the actual API (deselect with '-m \"not integration\"')",
+] 
