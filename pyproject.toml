@@ -1,0 +1,22 @@
+[project]
+name = "oneroster-client"
+version = "0.1.0"
+description = "Simple client for OneRoster API"
+authors = [
+    {name = "Amanda Shipka"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = "^3.8"
+dependencies = [
+    "requests (>=2.32.3,<3.0.0)"
+]
+
+[tool.poetry]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
