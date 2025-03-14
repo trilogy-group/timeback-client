@@ -1,7 +1,7 @@
 [project]
-name = "oneroster-client"
+name = "timeback-client"
 version = "0.1.0"
-description = "Simple client for OneRoster API"
+description = "Simple client for TimeBack API"
 authors = [
     {name = "Amanda Shipka"}
 ]
@@ -13,10 +13,13 @@ dependencies = [
 ]
 
 [tool.poetry]
+packages = [
+    { include = "timeback_client", from = "src" }
+]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+build-backend = "poetry.core.masonry.api" 

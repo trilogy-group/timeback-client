@@ -1,9 +1,9 @@
-"""Basic OneRoster API client."""
+"""Basic TimeBack API client."""
 
 import requests
 
-class OneRosterClient:
-    """Simple client for OneRoster API."""
+class TimeBackClient:
+    """Simple client for TimeBack API."""
     
     def __init__(self, api_url: str):
         """Initialize client with API URL."""
@@ -13,4 +13,4 @@ class OneRosterClient:
         """Get a user by ID."""
         response = requests.get(f"{self.api_url}/users/{user_id}")
         response.raise_for_status()
-        return response.json()
+        return response.json() 

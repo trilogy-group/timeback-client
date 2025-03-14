@@ -1,19 +1,19 @@
-# OneRoster Client
+# TimeBack Client
 
-A simple Python client for the OneRoster API.
+A simple Python client for the TimeBack API.
 
 ## Installation
 
 ```bash
-pip install git+https://github.com/your-org/oneroster-client.git
+pip install git+https://github.com/trilogy-group/timeback-client
 ```
 
 ## Usage
 
 ```python
-from oneroster_client import OneRosterClient
+from timeback_client import TimeBackClient
 
-client = OneRosterClient("https://api.url")
+client = TimeBackClient("https://api.url")
 user = client.get_user("user-id")
 print(user)
 ``` 

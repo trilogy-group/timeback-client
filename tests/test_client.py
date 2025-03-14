@@ -1,8 +1,8 @@
-"""Test the OneRoster client."""
+"""Test the TimeBack client."""
 
-from oneroster_client import OneRosterClient
+from timeback_client import TimeBackClient
 
 def test_client_init():
     """Test client initialization."""
-    client = OneRosterClient("https://test.api")
+    client = TimeBackClient("https://test.api")
     assert client.api_url == "https://test.api"
