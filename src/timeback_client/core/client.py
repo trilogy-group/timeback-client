@@ -10,14 +10,16 @@ The client is organized into three main services:
 Example:
     >>> from timeback_client import TimeBackClient
     >>> client = TimeBackClient("http://oneroster-staging.us-west-2.elasticbeanstalk.com")
-    >>> users = client.rostering.list_users(limit=10)
-    >>> user = client.rostering.get_user("user-id")
+    >>> users = client.rostering.users.list_users(limit=10)
+    >>> user = client.rostering.users.get_user("user-id")
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Type
 import requests
 from urllib.parse import urljoin
 import logging
+import importlib
+import inspect
 
 logger = logging.getLogger(__name__)
 
@@ -124,14 +126,6 @@ class TimeBackService:
             
         Returns:
             The response data with sorted results
-            
-        Example:
-            >>> service._apply_case_insensitive_sort(
-            ...     {'users': [{'familyName': 'ADAMS'}, {'familyName': 'brown'}]},
-            ...     'familyName',
-            ...     'asc'
-            ... )
-            {'users': [{'familyName': 'ADAMS'}, {'familyName': 'brown'}]}
         """
         # Determine the collection key (e.g., 'users', 'classes', etc.)
         collection_key = next((k for k in response_data.keys() if isinstance(response_data[k], list)), None)
@@ -153,12 +147,14 @@ class RosteringService(TimeBackService):
     """Client for TimeBack Rostering API.
     
     This service handles all user and organization-related operations
-    as defined in the OneRoster 1.2 specification.
+    as defined in the OneRoster 1.2 specification. It dynamically loads
+    specialized API classes for each entity type.
     
     Example:
         >>> client = TimeBackClient("http://oneroster-staging.us-west-2.elasticbeanstalk.com")
         >>> rostering = client.rostering
-        >>> users = rostering.list_users(limit=10)
+        >>> users = rostering.users.list_users(limit=10)
+        >>> orgs = rostering.orgs.list_orgs()  # When implemented
     """
     
     def __init__(self, base_url: str):
@@ -168,68 +164,80 @@ class RosteringService(TimeBackService):
             base_url: The base URL of the TimeBack API
         """
         super().__init__(base_url, "rostering")
+        self._api_registry = {}
+        self._load_api_modules()
+        
+    def _load_api_modules(self):
+        """Dynamically load all API modules in the api package."""
+        try:
+            # Import the api package using absolute import
+            api_package = importlib.import_module("timeback_client.api")
+            
+            # Get all modules in the api package
+            for module_name in getattr(api_package, "__all__", []):
+                try:
+                    # Import the module using absolute import
+                    module = importlib.import_module(f"timeback_client.api.{module_name}")
+                    
+                    # Find all classes that inherit from TimeBackService
+                    for name, obj in inspect.getmembers(module, inspect.isclass):
+                        if issubclass(obj, TimeBackService) and obj != TimeBackService:
+                            # Register the API class
+                            entity_name = module_name.lower()
+                            self._api_registry[entity_name] = obj(self.base_url)
+                            logger.info(f"Registered API class {name} for entity {entity_name}")
+                except ImportError as e:
+                    logger.warning(f"Could not import API module {module_name}: {e}")
+        except ImportError as e:
+            # If the api package doesn't have __all__, manually register known APIs
+            logger.warning(f"Could not import API package: {e}")
+            self._register_known_apis()
     
-    def get_user(self, user_id: str) -> Dict[str, Any]:
-        """Get a user by ID.
+    def _register_known_apis(self):
+        """Manually register known API classes."""
+        try:
+            # Import and register UsersAPI
+            from ..api.users import UsersAPI
+            self._api_registry["users"] = UsersAPI(self.base_url)
+            logger.info("Registered UsersAPI")
+            
+            # Add more API classes here as they are implemented
+            # Example:
+            # from ..api.orgs import OrgsAPI
+            # self._api_registry["orgs"] = OrgsAPI(self.base_url)
+        except ImportError as e:
+            logger.error(f"Could not import known API classes: {e}")
+    
+    def __getattr__(self, name):
+        """Dynamically access API classes by name.
+        
+        This allows for syntax like:
+        client.rostering.users.list_users()
+        client.rostering.orgs.list_orgs()
         
         Args:
-            user_id: The unique identifier of the user
+            name: The name of the API to access (e.g., "users", "orgs")
             
         Returns:
-            The user data as defined in the OneRoster specification
+            The API instance
             
         Raises:
-            requests.exceptions.HTTPError: If the user is not found (404)
-                or other HTTP errors
+            AttributeError: If the API is not registered
         """
-        return self._make_request(f"/users/{user_id}")
-    
-    def list_users(
-        self, 
-        limit: Optional[int] = None, 
-        offset: Optional[int] = None,
-        sort: Optional[str] = None,
-        order_by: Optional[str] = None,
-        filter_expr: Optional[str] = None,
-        fields: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
-        """List users with optional pagination, sorting, filtering and field selection.
+        if name in self._api_registry:
+            return self._api_registry[name]
         
-        Args:
-            limit: Maximum number of users to return
-            offset: Number of users to skip
-            sort: Field to sort by (e.g., 'familyName')
-            order_by: Sort direction ('asc' or 'desc')
-            filter_expr: Filter expression (e.g., "role='student'")
-            fields: List of fields to return
-            
-        Returns:
-            A dictionary containing the users and pagination information
-            
-        Example:
-            >>> service.list_users(
-            ...     limit=10,
-            ...     sort='familyName',
-            ...     order_by='asc',
-            ...     filter_expr="role='student'",
-            ...     fields=['sourcedId', 'givenName', 'familyName']
-            ... )
-        """
-        params = {}
-        if limit is not None:
-            params['limit'] = limit
-        if offset is not None:
-            params['offset'] = offset
-        if sort:
-            params['sort'] = sort
-        if order_by:
-            params['orderBy'] = order_by
-        if filter_expr:
-            params['filter'] = filter_expr
-        if fields:
-            params['fields'] = ','.join(fields)
-            
-        return self._make_request("/users", params=params)
+        # For backward compatibility, provide direct access to methods
+        # This will be deprecated in a future version
+        for api in self._api_registry.values():
+            if hasattr(api, name):
+                logger.warning(
+                    f"Direct method access '{name}' is deprecated. "
+                    f"Use '{api.__class__.__name__.lower()}.{name}' instead."
+                )
+                return getattr(api, name)
+        
+        raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
 
 class GradebookService(TimeBackService):
     """Client for TimeBack Gradebook API.
@@ -278,7 +286,7 @@ class TimeBackClient:
     
     Example:
         >>> client = TimeBackClient()  # Uses default staging URL
-        >>> users = client.rostering.list_users()
+        >>> users = client.rostering.users.list_users()
         >>> grades = client.gradebook.get_grades()  # Coming soon
         >>> resources = client.resources.list_resources()  # Coming soon
     """

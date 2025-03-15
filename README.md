@@ -5,7 +5,7 @@ A Python client for the TimeBack API (OneRoster 1.2 implementation).
 ## Installation
 
 ```bash
-pip install git+https://github.com/trilogy-group/timeback-client.git@v0.1.3
+pip install git+https://github.com/trilogy-group/timeback-client.git@v0.2.0
 ```
 
 ## Usage
@@ -16,6 +16,8 @@ The TimeBack client is organized into three main services following the OneRoste
 - Gradebook Service (`/ims/oneroster/gradebook/v1p2`) - Grades and assessments
 - Resources Service (`/ims/oneroster/resources/v1p2`) - Learning resources
 
+Each service provides access to specialized API classes for different entity types.
+
 ### Basic Usage
 
 ```python
@@ -24,38 +26,62 @@ from timeback_client import TimeBackClient
 # Initialize the client (uses default staging URL)
 client = TimeBackClient()
 
-# Use the rostering service
-users = client.rostering.list_users(limit=10)
-user = client.rostering.get_user("user-id")
+# Use the users API through the rostering service
+users = client.rostering.users.list_users(limit=10)
+user = client.rostering.users.get_user("user-id")
 
-# Use the gradebook service
-grades = client.gradebook.get_grades()  # Coming soon
+# Use the gradebook service (coming soon)
+# grades = client.gradebook.grades.list_grades()
 
-# Use the resources service
-resources = client.resources.list_resources()  # Coming soon
+# Use the resources service (coming soon)
+# resources = client.resources.resources.list_resources()
 ```
 
-### Services
+### Services and APIs
 
 #### Rostering Service
 
-The rostering service handles all user and organization-related operations:
+The rostering service provides access to various entity APIs:
 
 ```python
 # Get the rostering service
 rostering = client.rostering
 
+# Access the users API
+users_api = rostering.users
+
 # List users with pagination, filtering, and sorting
-users = rostering.list_users(
+users = users_api.list_users(
     limit=10,                        # Maximum number of users to return
     offset=0,                        # Number of users to skip
-    sort="familyName:asc",          # Sort by family name ascending
+    sort="familyName",               # Sort by family name
+    order_by="asc",                  # Sort ascending
     filter_expr="role='student'",    # Only get students
     fields=['sourcedId', 'givenName', 'familyName', 'email']  # Fields to return
 )
 
 # Get a specific user
-user = rostering.get_user("user-id")
+user = users_api.get_user("user-id")
+
+# Create a new user
+from timeback_client.models.user import User, RoleAssignment, OrgRef, UserRole
+new_user = User(
+    sourcedId="unique-id",
+    givenName="John",
+    familyName="Doe",
+    email="john.doe@example.com",
+    roles=[
+        RoleAssignment(
+            role=UserRole.STUDENT,
+            org=OrgRef(sourcedId="org-id")
+        )
+    ]
+)
+result = users_api.create_user(new_user)
+
+# Update a user
+user.givenName = "Jonathan"
+result = users_api.update_user(user.sourcedId, user)
 ```
 
 ##### Response Structure
@@ -102,13 +128,13 @@ You can filter users by various fields using the `filter_expr` parameter:
 
 ```python
 # Get all active students
-students = rostering.list_users(filter_expr="role='student' AND status='active'")
+students = users_api.list_users(filter_expr="role='student' AND status='active'")
 
 # Get all parents
-parents = rostering.list_users(filter_expr="role='parent'")
+parents = users_api.list_users(filter_expr="role='parent'")
 
 # Get users by organization
-org_users = rostering.list_users(filter_expr="org.sourcedId='org-id'")
+org_users = users_api.list_users(filter_expr="org.sourcedId='org-id'")
 ```
 
 #### Gradebook Service
@@ -152,6 +178,28 @@ Base URL (http://oneroster-staging.us-west-2.elasticbeanstalk.com)
         └── ...
 ```
 
+## Architecture
+
+The client uses a service registry pattern to dynamically load specialized API classes for different entity types:
+
+```
+TimeBackClient
+├── rostering (RosteringService)
+│   ├── users (UsersAPI)
+│   ├── orgs (OrgsAPI) - coming soon
+│   └── ... other entity APIs
+├── gradebook (GradebookService)
+│   └── ... entity APIs coming soon
+└── resources (ResourcesService)
+    └── ... entity APIs coming soon
+```
+
+This architecture allows for:
+- Clean separation of concerns
+- No code duplication
+- Easy addition of new entity types
+- Consistent API access patterns
+
 ## Error Handling
 
 The client will raise standard `requests` exceptions:
@@ -166,7 +214,7 @@ Example error handling:
 from requests.exceptions import HTTPError, ConnectionError
 
 try:
-    users = client.rostering.list_users()
+    users = client.rostering.users.list_users()
 except HTTPError as e:
     if e.response.status_code == 404:
         print("Resource not found")

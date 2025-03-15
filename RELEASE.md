@@ -77,4 +77,22 @@ pip install timeback_client-x.y.z-py3-none-any.whl
 We follow [Semantic Versioning](https://semver.org/):
 - MAJOR version for incompatible API changes
 - MINOR version for added functionality in a backward compatible manner
-- PATCH version for backward compatible bug fixes 
+- PATCH version for backward compatible bug fixes
+
+## Version History
+
+### v0.2.0
+- Implemented service registry pattern for better architecture
+- Refactored RosteringService to use UsersAPI internally
+- Added dynamic loading of API modules
+- Improved documentation and examples
+- Backward compatibility for direct method access (with deprecation warning)
+
+### v0.1.4
+- Added create_user and update_user methods to RosteringService
+- Made API URL parameter optional with default staging URL
+
+### v0.1.3
+- Initial public release
+- Basic implementation of RosteringService
+- Support for listing and getting users 
