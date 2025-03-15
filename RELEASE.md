@@ -81,6 +81,12 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ## Version History
 
+### v0.2.3
+- Fixed error handling in delete_user method to properly handle empty responses
+- Added special handling for 404 errors during deletion (treating them as success)
+- Improved JSON response parsing to handle empty or invalid responses
+- Added check to avoid redundant updates when a user is already marked for deletion
+
 ### v0.2.2
 - Improved error handling in delete_user method
 - Removed fallback to minimal user data in delete_user method

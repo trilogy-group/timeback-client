@@ -20,6 +20,7 @@ from urllib.parse import urljoin
 import logging
 import importlib
 import inspect
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,7 @@ class TimeBackService:
             params: Query parameters for GET requests
             
         Returns:
-            The JSON response from the API
+            The JSON response from the API or an empty dict if no content
             
         Raises:
             requests.exceptions.HTTPError: For HTTP errors (4xx, 5xx)
@@ -95,17 +96,28 @@ class TimeBackService:
             logger.error("Response body: %s", response.text)
             
         response.raise_for_status()
-        response_data = response.json()
         
-        # Apply case-insensitive sorting if needed
-        if params and 'sort' in params and 'orderBy' in params:
-            response_data = self._apply_case_insensitive_sort(
-                response_data,
-                params['sort'],
-                params['orderBy']
-            )
+        # Handle empty responses
+        if not response.text.strip():
+            logger.info("Empty response received from %s", url)
+            return {"message": "Success (empty response)"}
             
-        return response_data
+        try:
+            response_data = response.json()
+            logger.info("Successful response from %s", url)
+            
+            # Apply case-insensitive sorting if needed
+            if params and 'sort' in params and 'orderBy' in params:
+                response_data = self._apply_case_insensitive_sort(
+                    response_data,
+                    params['sort'],
+                    params['orderBy']
+                )
+                
+            return response_data
+        except json.JSONDecodeError as e:
+            logger.warning(f"Could not parse response as JSON: {e}")
+            return {"message": "Success (non-JSON response)", "text": response.text}
 
     def _apply_case_insensitive_sort(
         self,

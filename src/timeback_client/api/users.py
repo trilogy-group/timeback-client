@@ -169,33 +169,51 @@ class UsersAPI(TimeBackService):
             user_id: The ID of the user to delete
             
         Returns:
-            The API response
+            The API response or a success message if the API returns an empty response
             
         Raises:
-            requests.exceptions.HTTPError: If the API request fails
+            requests.exceptions.HTTPError: If the API request fails (except 404)
         """
-        # First get the current user data
         try:
+            # First get the current user data
             logger.info(f"Fetching user {user_id} before marking for deletion")
-            current_user_data = self.get_user(user_id)
-            
-            if 'user' not in current_user_data:
-                logger.error(f"Invalid response format when fetching user {user_id}")
-                raise ValueError(f"Invalid response format when fetching user {user_id}")
+            try:
+                current_user_data = self.get_user(user_id)
                 
-            # Update only the status field
-            user_data = current_user_data['user']
-            previous_status = user_data.get('status')
-            user_data['status'] = 'tobedeleted'
-            
-            logger.info(f"Updating user {user_id} status from '{previous_status}' to 'tobedeleted'")
-            
-            # Update the user with the new status
-            return self._make_request(
-                endpoint=f"/users/{user_id}",
-                method="PUT",
-                data={"user": user_data}
-            )
-        except requests.exceptions.HTTPError as e:
-            logger.error(f"HTTP error when deleting user {user_id}: {str(e)}")
+                if 'user' not in current_user_data:
+                    logger.error(f"Invalid response format when fetching user {user_id}")
+                    raise ValueError(f"Invalid response format when fetching user {user_id}")
+                    
+                # Update only the status field
+                user_data = current_user_data['user']
+                previous_status = user_data.get('status')
+                
+                # If already marked for deletion, return success
+                if previous_status == 'tobedeleted':
+                    logger.info(f"User {user_id} is already marked for deletion")
+                    return {"message": f"User {user_id} is already marked for deletion"}
+                    
+                user_data['status'] = 'tobedeleted'
+                
+                logger.info(f"Updating user {user_id} status from '{previous_status}' to 'tobedeleted'")
+                
+                # Update the user with the new status
+                return self._make_request(
+                    endpoint=f"/users/{user_id}",
+                    method="PUT",
+                    data={"user": user_data}
+                )
+            except requests.exceptions.HTTPError as e:
+                # If user doesn't exist (404) when trying to get it, consider it already deleted
+                if hasattr(e, 'response') and e.response and e.response.status_code == 404:
+                    logger.info(f"User {user_id} not found during initial fetch, considering delete successful")
+                    return {"message": f"User {user_id} not found or already deleted"}
+                raise
+                
+        except Exception as e:
+            logger.error(f"Error deleting user {user_id}: {str(e)}")
+            # If it's a 404 error, consider it a success (user already deleted)
+            if isinstance(e, requests.exceptions.HTTPError) and hasattr(e, 'response') and e.response and e.response.status_code == 404:
+                logger.info(f"User {user_id} not found, considering delete successful")
+                return {"message": f"User {user_id} not found or already deleted"}
             raise 
