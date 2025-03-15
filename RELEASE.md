@@ -81,6 +81,11 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ## Version History
 
+### v0.2.2
+- Improved error handling in delete_user method
+- Removed fallback to minimal user data in delete_user method
+- Added proper logging for better debugging
+
 ### v0.2.1
 - Added delete_user method to UsersAPI class
 - Fixed error handling in client methods

@@ -8,6 +8,11 @@ from typing import Dict, Any, Optional, List, Union
 import uuid
 from ..models.user import User
 from ..core.client import TimeBackService
+import requests
+import logging
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 class UsersAPI(TimeBackService):
     """API client for user-related endpoints."""
@@ -158,7 +163,7 @@ class UsersAPI(TimeBackService):
         """Mark a user for deletion in the TimeBack API.
         
         In OneRoster, users are not immediately deleted but rather marked with status='tobedeleted'.
-        This method updates the user's status to 'tobedeleted'.
+        This method first fetches the current user data and then updates only the status field.
         
         Args:
             user_id: The ID of the user to delete
@@ -169,16 +174,28 @@ class UsersAPI(TimeBackService):
         Raises:
             requests.exceptions.HTTPError: If the API request fails
         """
-        # Create minimal user data with just the required fields for deletion
-        user_data = {
-            "user": {
-                "sourcedId": user_id,
-                "status": "tobedeleted"
-            }
-        }
-        
-        return self._make_request(
-            endpoint=f"/users/{user_id}",
-            method="PUT",
-            data=user_data
-        ) 
+        # First get the current user data
+        try:
+            logger.info(f"Fetching user {user_id} before marking for deletion")
+            current_user_data = self.get_user(user_id)
+            
+            if 'user' not in current_user_data:
+                logger.error(f"Invalid response format when fetching user {user_id}")
+                raise ValueError(f"Invalid response format when fetching user {user_id}")
+                
+            # Update only the status field
+            user_data = current_user_data['user']
+            previous_status = user_data.get('status')
+            user_data['status'] = 'tobedeleted'
+            
+            logger.info(f"Updating user {user_id} status from '{previous_status}' to 'tobedeleted'")
+            
+            # Update the user with the new status
+            return self._make_request(
+                endpoint=f"/users/{user_id}",
+                method="PUT",
+                data={"user": user_data}
+            )
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error when deleting user {user_id}: {str(e)}")
+            raise 
