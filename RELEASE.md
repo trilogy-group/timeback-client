@@ -81,6 +81,10 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ## Version History
 
+### v0.2.1
+- Added delete_user method to UsersAPI class
+- Fixed error handling in client methods
+
 ### v0.2.0
 - Implemented service registry pattern for better architecture
 - Refactored RosteringService to use UsersAPI internally

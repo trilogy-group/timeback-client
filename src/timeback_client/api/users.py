@@ -152,4 +152,33 @@ class UsersAPI(TimeBackService):
             endpoint=f"/users/{user_id}",
             method="PUT",
             data=user.to_dict()
+        )
+    
+    def delete_user(self, user_id: str) -> Dict[str, Any]:
+        """Mark a user for deletion in the TimeBack API.
+        
+        In OneRoster, users are not immediately deleted but rather marked with status='tobedeleted'.
+        This method updates the user's status to 'tobedeleted'.
+        
+        Args:
+            user_id: The ID of the user to delete
+            
+        Returns:
+            The API response
+            
+        Raises:
+            requests.exceptions.HTTPError: If the API request fails
+        """
+        # Create minimal user data with just the required fields for deletion
+        user_data = {
+            "user": {
+                "sourcedId": user_id,
+                "status": "tobedeleted"
+            }
+        }
+        
+        return self._make_request(
+            endpoint=f"/users/{user_id}",
+            method="PUT",
+            data=user_data
         ) 
