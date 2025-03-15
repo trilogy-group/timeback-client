@@ -5,7 +5,7 @@ A Python client for the TimeBack API (OneRoster 1.2 implementation).
 ## Installation
 
 ```bash
-pip install git+https://github.com/trilogy-group/timeback-client.git@main
+pip install git+https://github.com/trilogy-group/timeback-client.git@v0.1.1
 ```
 
 ## Usage
@@ -193,6 +193,8 @@ poetry run pytest
 # Run integration tests only
 poetry run pytest -v -m "integration"
 ```
+
+For release procedures and versioning guidelines, see [RELEASE.md](RELEASE.md).
 
 ## Security Best Practices
 

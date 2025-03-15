@@ -1,98 +1,176 @@
 """Tests for user-related API functionality."""
 
 import pytest
-from timeback_client.models.user import User, Address, UserRole
+import logging
+import uuid
+from timeback_client.models.user import User, Address, UserRole, RoleAssignment, OrgRef
 from timeback_client.api.users import UsersAPI
 
 STAGING_URL = "http://oneroster-staging.us-west-2.elasticbeanstalk.com"
+TEST_ORG_ID = "f47ac10b-58cc-4372-a567-0e02b2c3d479"  # Default test org ID
 
-def test_user_model_serialization():
-    """Test that User model serializes correctly for API requests."""
-    user = User(
-        first_name="John",
-        last_name="Doe",
-        role=UserRole.PARENT,
-        email="john.doe@example.com",
-        phone="123-456-7890",
-        address=Address(
-            country="United States",
-            city="Example City",
-            state="CA",
-            zip="12345"
-        )
-    )
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
+def test_create_user():
+    """Test creating a user with required fields.
     
-    data = user.to_dict()
-    assert data["user"]["givenName"] == "John"
-    assert data["user"]["familyName"] == "Doe"
-    assert data["user"]["roles"][0]["role"] == "parent"
-    assert data["user"]["email"] == "john.doe@example.com"
-    assert data["user"]["metadata"]["phone"] == "123-456-7890"
-    assert data["user"]["metadata"]["address"]["country"] == "United States"
-
-@pytest.mark.integration
-def test_create_parent():
-    """Test creating a parent user via the API."""
+    The API returns a sourcedIdPairs object that maps between:
+    1. suppliedSourcedId: The ID we provided in our request
+    2. allocatedSourcedId: The ID that was actually assigned by the server
+    
+    These may be the same (if server accepts our ID) or different (if server assigns new ID).
+    """
     api = UsersAPI(STAGING_URL)
     
-    # Create test parent data
-    address = Address(
-        country="United States",
-        city="Test City",
-        state="CA",
-        zip="12345"
+    # Generate a random sourcedId for this test
+    test_id = str(uuid.uuid4())
+    
+    # Create test user with sourcedId
+    user = User(
+        sourcedId=test_id,  # This will be the suppliedSourcedId
+        givenName="Test",
+        familyName="User",
+        roles=[
+            RoleAssignment(
+                role=UserRole.STUDENT,
+                org=OrgRef(sourcedId=TEST_ORG_ID)
+            )
+        ]
     )
     
-    # Create parent with full data
-    response = api.create_parent(
-        first_name="Test",
-        last_name="Parent",
-        phone="123-456-7890",
-        address=address,
-        metadata={"interested_in_premium": True}
-    )
-    
-    print("\n=== Create Parent Response ===")
+    # Create user
+    response = api.create_user(user)
+    print("\n=== Create User Response ===")
     print(response)
     
-    # Verify response
-    assert "user" in response
-    user = response["user"]
-    assert user["givenName"] == "Test"
-    assert user["familyName"] == "Parent"
-    assert user["roles"][0]["role"] == "parent"
-    assert user["metadata"]["phone"] == "123-456-7890"
-    assert user["metadata"]["address"]["country"] == "United States"
-    assert user["metadata"]["interested_in_premium"] is True
+    # Verify response contains sourcedId mapping
+    assert "sourcedIdPairs" in response
+    pairs = response["sourcedIdPairs"]
+    assert pairs["suppliedSourcedId"] == test_id  # ID we provided
+    assert pairs["allocatedSourcedId"] == test_id  # ID server assigned
 
-@pytest.mark.integration
-def test_update_parent():
-    """Test updating a parent user via the API."""
+def test_create_user_without_sourceid():
+    """Test that creating a user without sourcedId raises an error."""
     api = UsersAPI(STAGING_URL)
     
-    # First create a parent
-    create_response = api.create_parent(
-        first_name="Update",
-        last_name="Test",
-        phone="123-456-7890"
+    with pytest.raises(ValueError):  # sourcedId is required by Pydantic model
+        user = User(
+            givenName="Test",
+            familyName="User",
+            roles=[
+                RoleAssignment(
+                    role=UserRole.STUDENT,
+                    org=OrgRef(sourcedId=TEST_ORG_ID)
+                )
+            ]
+        )
+
+def test_get_user():
+    """Test retrieving a user after creation.
+    
+    This test:
+    1. Creates a new user
+    2. Gets the allocated sourcedId from the response
+    3. Retrieves the user using that ID
+    4. Verifies the user data matches what we created
+    """
+    api = UsersAPI(STAGING_URL)
+    
+    # First create a user
+    test_id = str(uuid.uuid4())
+    test_given_name = "Get"
+    test_family_name = "TestUser"
+    
+    user = User(
+        sourcedId=test_id,
+        givenName=test_given_name,
+        familyName=test_family_name,
+        roles=[
+            RoleAssignment(
+                role=UserRole.STUDENT,
+                org=OrgRef(sourcedId=TEST_ORG_ID)
+            )
+        ]
     )
-    user_id = create_response["user"]["sourcedId"]
     
-    # Update the parent
-    updated_user = User(
-        first_name="Updated",
-        last_name="Name",
-        role=UserRole.PARENT,
-        phone="987-654-3210"
+    # Create the user and get the allocated ID
+    create_response = api.create_user(user)
+    allocated_id = create_response["sourcedIdPairs"]["allocatedSourcedId"]
+    
+    # Now retrieve the user
+    get_response = api.get_user(allocated_id)
+    print("\n=== Get User Response ===")
+    print(get_response)
+    
+    # Verify the retrieved user matches what we created
+    assert "user" in get_response
+    retrieved_user = get_response["user"]
+    assert retrieved_user["sourcedId"] == allocated_id
+    assert retrieved_user["givenName"] == test_given_name
+    assert retrieved_user["familyName"] == test_family_name
+    assert retrieved_user["status"] == "active"
+    assert len(retrieved_user["roles"]) == 1
+    assert retrieved_user["roles"][0]["role"] == UserRole.STUDENT
+    assert retrieved_user["roles"][0]["org"]["sourcedId"] == TEST_ORG_ID 
+
+def test_list_users():
+    """Test listing users with various parameters.
+    
+    Tests the following functionality:
+    - Basic listing (no parameters)
+    - Pagination (limit)
+    - Field selection
+    - Sorting (case-insensitive)
+    - Filtering by familyName
+    """
+    api = UsersAPI(STAGING_URL)
+    
+    # Test 1: Basic listing
+    response = api.list_users()
+    print("\n=== List Users Response ===")
+    print(response)
+    assert "users" in response
+    assert isinstance(response["users"], list)
+    assert len(response["users"]) > 0  # Verify we got some users
+    
+    # Test 2: Pagination
+    response = api.list_users(limit=2)
+    assert len(response["users"]) <= 2
+    
+    # Test 3: Sort by familyName
+    response = api.list_users(
+        sort="familyName",  # Using familyName as it's a standard OneRoster field
+        order_by="asc",
+        fields=['sourcedId', 'familyName']
     )
+    print("\n=== Sorted Users ===")
+    print(response)
+    family_names = [user["familyName"] for user in response["users"]]
+    # Case-insensitive comparison
+    assert [name.lower() for name in family_names] == sorted([name.lower() for name in family_names])
     
-    update_response = api.update_user(user_id, updated_user)
-    print("\n=== Update Parent Response ===")
-    print(update_response)
-    
-    # Verify response
-    assert "user" in update_response
-    user = update_response["user"]
-    assert user["givenName"] == "Updated"
-    assert user["familyName"] == "Name"
-    assert user["metadata"]["phone"] == "987-654-3210" 
+    # Test 4: Field selection
+    response = api.list_users(
+        fields=['sourcedId', 'givenName', 'familyName']
+    )
+    for user in response["users"]:
+        assert set(user.keys()) <= {"sourcedId", "givenName", "familyName"}
+        assert "roles" not in user  # Verify excluded field is not present
+
+    # Test 5: Filter by familyName
+    response = api.list_users(
+        filter_expr="familyName='Garcia'",
+        fields=['sourcedId', 'givenName', 'familyName']
+    )
+    print("\n=== Filtered Users ===")
+    print(response)
+    for user in response["users"]:
+        assert user["familyName"] == "Garcia"
+
+    # TODO: Add test for filtering by roles.role once dot notation filtering is supported
+    # Example of future test:
+    # response = api.list_users(
+    #     filter_expr="roles.role='student'",
+    #     fields=['sourcedId', 'givenName', 'familyName', 'roles']
+    # ) 

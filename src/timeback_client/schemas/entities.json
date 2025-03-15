@@ -2,7 +2,7 @@
   "entities": [
     {
       "name": "User",
-      "description": "Users, Teachers and Students are human beings that are teaching or studying in a class respectively. A single User class represents both teachers and students with role property distinguishing the user's role.",
+      "description": "Users, Teachers and Students are human beings that are teaching or studying in a class respectively. A single User class represents both teachers and students with role property distinguishing the user's role. When creating a user, the API returns a sourcedIdPairs object mapping between suppliedSourcedId (provided) and allocatedSourcedId (assigned).",
       "required": ["sourcedId", "status", "dateLastModified", "enabledUser", "givenName", "familyName", "roles"],
       "fields": [
         "sourcedId: string (UUID, required)",
@@ -48,9 +48,8 @@
     },
     {
       "name": "OrgRef",
-      "required": ["href", "sourcedId", "type"],
+      "required": ["sourcedId", "type"],
       "fields": [
-        "href: string (URI, required)",
         "sourcedId: string (required)",
         "type: string (org, required)"
       ]

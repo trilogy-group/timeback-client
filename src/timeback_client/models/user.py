@@ -16,6 +16,7 @@ from typing import Optional, Dict, Any, List
 from enum import Enum
 from pydantic import BaseModel, Field, validator
 import uuid
+import pytz
 
 class UserRole(str, Enum):
     """Valid user roles in the TimeBack API."""
@@ -37,9 +38,16 @@ class UserStatus(str, Enum):
     ACTIVE = "active"
     TOBEDELETED = "tobedeleted"
 
-class EnabledUser(bool):
+class EnabledUser:
     """Whether the user account is enabled."""
-    pass
+    def __init__(self, value: bool):
+        self.value = value
+
+    def __bool__(self):
+        return self.value
+
+    def __str__(self):
+        return str(self.value).lower()
 
 class Address(BaseModel):
     """User address information stored in metadata."""
@@ -50,7 +58,6 @@ class Address(BaseModel):
 
 class OrgRef(BaseModel):
     """Reference to an organization."""
-    href: str
     sourcedId: str
     type: str = "org"
 
@@ -58,7 +65,7 @@ class RoleAssignment(BaseModel):
     """Role assignment with organization reference."""
     role: UserRole
     roleType: str = "primary"
-    org: Optional[OrgRef] = None
+    org: OrgRef
     userProfile: Optional[str] = Field(None, description="URI of associated user profile")
     beginDate: Optional[str] = Field(None, description="ISO date when role begins")
     endDate: Optional[str] = Field(None, description="ISO date when role ends")
@@ -109,9 +116,9 @@ class User(BaseModel):
     givenName: str = Field(description="User's first name")
     familyName: str = Field(description="User's last name")
     roles: List[RoleAssignment] = Field(description="User's roles and organizations")
-    sourcedId: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Unique identifier")
+    sourcedId: str = Field(description="Unique identifier")
     status: UserStatus = Field(default=UserStatus.ACTIVE, description="User's status")
-    dateLastModified: datetime = Field(default_factory=datetime.utcnow, description="Last modification time")
+    dateLastModified: datetime = Field(default_factory=lambda: datetime.now(pytz.UTC), description="Last modification time")
     enabledUser: bool = Field(default=True, description="Whether user has system access")
     
     # Optional fields
@@ -129,11 +136,11 @@ class User(BaseModel):
     pronouns: Optional[str] = Field(None, description="Preferred pronouns")
     userProfiles: List[UserProfile] = Field(default_factory=list, description="System/app profiles")
     primaryOrg: Optional[OrgRef] = Field(None, description="Primary organization")
-    identifier: Optional[str] = Field(None, description="Legacy identifier (use userIds instead)")
+    identifier: Optional[str] = Field(None, description="Legacy identifier")
     sms: Optional[str] = Field(None, description="SMS number")
     agents: List[str] = Field(default_factory=list, description="Related user IDs (e.g. parents)")
     grades: List[str] = Field(default_factory=list, description="Grade levels for students")
-    password: Optional[str] = Field(None, description="Top-level password (should be encrypted)")
+    password: Optional[str] = Field(None, description="Top-level password")
     resources: List[ResourceRef] = Field(default_factory=list, description="Associated learning resources")
 
     @validator('roles')
@@ -142,7 +149,7 @@ class User(BaseModel):
             raise ValueError('At least one role is required')
         return v
 
-    def to_api_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert model to dictionary for API requests.
         
         Returns:
@@ -152,7 +159,7 @@ class User(BaseModel):
         data = self.model_dump(exclude_none=True)
         
         # Convert datetime to ISO format with Z
-        data['dateLastModified'] = self.dateLastModified.isoformat() + "Z"
+        data['dateLastModified'] = self.dateLastModified.isoformat()
         
         # Handle metadata fields
         metadata = self.metadata or {}
@@ -163,10 +170,10 @@ class User(BaseModel):
         if metadata:
             data['metadata'] = metadata
             
-        # Format agent references
+        # Format agent references if any
         if self.agents:
             data['agents'] = [
-                {"href": f"/users/{agent}", "sourcedId": agent, "type": "user"}
+                {"sourcedId": agent, "type": "user"}
                 for agent in self.agents
             ]
             
@@ -179,7 +186,7 @@ class User(BaseModel):
         Returns:
             Dict formatted for creating a new user
         """
-        return self.to_api_dict()
+        return self.to_dict()
         
     def to_update_dict(self) -> Dict[str, Any]:
         """Convert model to dict for PUT operations.
@@ -187,4 +194,4 @@ class User(BaseModel):
         Returns:
             Dict formatted for updating an existing user
         """
-        return self.to_api_dict() 
+        return self.to_dict() 

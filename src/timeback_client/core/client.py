@@ -14,9 +14,12 @@ Example:
     >>> user = client.rostering.get_user("user-id")
 """
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import requests
 from urllib.parse import urljoin
+import logging
+
+logger = logging.getLogger(__name__)
 
 class TimeBackService:
     """Base class for TimeBack API services.
@@ -71,6 +74,12 @@ class TimeBackService:
             "Accept": "application/json"
         }
         
+        logger.info("Making request to %s", url)
+        logger.info("Method: %s", method)
+        logger.info("Headers: %s", headers)
+        logger.info("Data: %s", data)
+        logger.info("Params: %s", params)
+        
         response = requests.request(
             method=method,
             url=url,
@@ -78,8 +87,67 @@ class TimeBackService:
             json=data if data else None,
             params=params
         )
+        
+        if not response.ok:
+            logger.error("Request failed with status %d", response.status_code)
+            logger.error("Response body: %s", response.text)
+            
         response.raise_for_status()
-        return response.json()
+        response_data = response.json()
+        
+        # Apply case-insensitive sorting if needed
+        if params and 'sort' in params and 'orderBy' in params:
+            response_data = self._apply_case_insensitive_sort(
+                response_data,
+                params['sort'],
+                params['orderBy']
+            )
+            
+        return response_data
+
+    def _apply_case_insensitive_sort(
+        self,
+        response_data: Dict[str, Any],
+        sort_field: str,
+        order_by: str
+    ) -> Dict[str, Any]:
+        """Apply case-insensitive sorting to API response data.
+        
+        This method is called automatically by _make_request when sort and orderBy
+        parameters are present. It ensures consistent case-insensitive sorting
+        regardless of the API's sorting behavior.
+        
+        Args:
+            response_data: The API response data
+            sort_field: The field to sort by
+            order_by: The sort direction ('asc' or 'desc')
+            
+        Returns:
+            The response data with sorted results
+            
+        Example:
+            >>> service._apply_case_insensitive_sort(
+            ...     {'users': [{'familyName': 'ADAMS'}, {'familyName': 'brown'}]},
+            ...     'familyName',
+            ...     'asc'
+            ... )
+            {'users': [{'familyName': 'ADAMS'}, {'familyName': 'brown'}]}
+        """
+        # Determine the collection key (e.g., 'users', 'classes', etc.)
+        collection_key = next((k for k in response_data.keys() if isinstance(response_data[k], list)), None)
+        if not collection_key or not response_data[collection_key]:
+            return response_data
+            
+        # Sort the collection case-insensitively
+        items = response_data[collection_key]
+        sorted_items = sorted(
+            items,
+            key=lambda x: str(x.get(sort_field, '')).lower(),
+            reverse=(order_by.lower() == 'desc')
+        )
+        
+        response_data[collection_key] = sorted_items
+        return response_data
 
 class RosteringService(TimeBackService):
     """Client for TimeBack Rostering API.
@@ -119,22 +187,48 @@ class RosteringService(TimeBackService):
     def list_users(
         self, 
         limit: Optional[int] = None, 
-        offset: Optional[int] = None
+        offset: Optional[int] = None,
+        sort: Optional[str] = None,
+        order_by: Optional[str] = None,
+        filter_expr: Optional[str] = None,
+        fields: Optional[List[str]] = None
     ) -> Dict[str, Any]:
-        """List users with optional pagination.
+        """List users with optional pagination, sorting, filtering and field selection.
         
         Args:
             limit: Maximum number of users to return
             offset: Number of users to skip
+            sort: Field to sort by (e.g., 'familyName')
+            order_by: Sort direction ('asc' or 'desc')
+            filter_expr: Filter expression (e.g., "role='student'")
+            fields: List of fields to return
             
         Returns:
             A dictionary containing the users and pagination information
+            
+        Example:
+            >>> service.list_users(
+            ...     limit=10,
+            ...     sort='familyName',
+            ...     order_by='asc',
+            ...     filter_expr="role='student'",
+            ...     fields=['sourcedId', 'givenName', 'familyName']
+            ... )
         """
         params = {}
         if limit is not None:
             params['limit'] = limit
         if offset is not None:
             params['offset'] = offset
+        if sort:
+            params['sort'] = sort
+        if order_by:
+            params['orderBy'] = order_by
+        if filter_expr:
+            params['filter'] = filter_expr
+        if fields:
+            params['fields'] = ','.join(fields)
+            
         return self._make_request("/users", params=params)
 
 class GradebookService(TimeBackService):
