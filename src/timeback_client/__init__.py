@@ -23,7 +23,7 @@ Example:
     >>> users = rostering.list_users()
 """
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 from .core.client import (
     TimeBackClient,

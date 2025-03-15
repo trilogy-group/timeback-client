@@ -5,7 +5,7 @@ A Python client for the TimeBack API (OneRoster 1.2 implementation).
 ## Installation
 
 ```bash
-pip install git+https://github.com/trilogy-group/timeback-client.git@v0.1.1
+pip install git+https://github.com/trilogy-group/timeback-client.git@v0.1.3
 ```
 
 ## Usage
@@ -21,8 +21,8 @@ The TimeBack client is organized into three main services following the OneRoste
 ```python
 from timeback_client import TimeBackClient
 
-# Initialize the client with staging URL
-client = TimeBackClient("http://oneroster-staging.us-west-2.elasticbeanstalk.com")
+# Initialize the client (uses default staging URL)
+client = TimeBackClient()
 
 # Use the rostering service
 users = client.rostering.list_users(limit=10)

@@ -277,19 +277,22 @@ class TimeBackClient:
     service clients.
     
     Example:
-        >>> client = TimeBackClient("http://oneroster-staging.us-west-2.elasticbeanstalk.com")
+        >>> client = TimeBackClient()  # Uses default staging URL
         >>> users = client.rostering.list_users()
         >>> grades = client.gradebook.get_grades()  # Coming soon
         >>> resources = client.resources.list_resources()  # Coming soon
     """
     
-    def __init__(self, api_url: str):
+    # Default staging URL
+    DEFAULT_URL = "http://oneroster-staging.us-west-2.elasticbeanstalk.com"
+    
+    def __init__(self, api_url: str = None):
         """Initialize TimeBack client with API URL.
         
         Args:
-            api_url: The base URL of the TimeBack API
+            api_url: The base URL of the TimeBack API. If not provided, uses the default staging URL.
         """
-        self.api_url = api_url.rstrip('/')
+        self.api_url = (api_url or self.DEFAULT_URL).rstrip('/')
         self.rostering = RosteringService(self.api_url)
         self.gradebook = GradebookService(self.api_url)
         self.resources = ResourcesService(self.api_url) 
