@@ -42,7 +42,8 @@ class TimeBackService:
             base_url: The base URL of the TimeBack API
             service: The service name (rostering, gradebook, or resources)
         """
-        self.base_url = base_url.rstrip('/')
+        # Handle None for base_url
+        self.base_url = "" if base_url is None else base_url.rstrip('/')
         self.service = service
         self.api_path = f"/ims/oneroster/{service}/v1p2"
         
@@ -289,6 +290,112 @@ class ResourcesService(TimeBackService):
         """
         super().__init__(base_url, "resources")
 
+class QTIService(TimeBackService):
+    """Client for TimeBack QTI API.
+    
+    This service handles all assessment content operations
+    as defined in the QTI 3.0 specification.
+    """
+    
+    # Default QTI staging URL
+    DEFAULT_QTI_URL = "https://alpha-qti-api-43487de62e73.herokuapp.com/api"
+    
+    def __init__(self, base_url: str = None, qti_api_url: str = None):
+        """Initialize QTI service.
+        
+        Args:
+            base_url: The base URL of the TimeBack API (not used directly by QTI service)
+            qti_api_url: The base URL of the QTI API. If not provided, uses the default staging URL.
+        """
+        # QTI service doesn't use the standard OneRoster base URL
+        # Instead it has its own API endpoint
+        self.qti_url = (qti_api_url or self.DEFAULT_QTI_URL).rstrip('/')
+        
+        # We still call the parent constructor, but override the methods to use qti_url
+        super().__init__(base_url, "qti")
+        self._api_registry = {}
+        self._load_api_modules()
+    
+    def _make_request(
+        self, 
+        endpoint: str, 
+        method: str = "GET", 
+        data: Optional[Dict[str, Any]] = None,
+        params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Make request to QTI API.
+        
+        Override the parent _make_request method to use the QTI URL instead of the
+        standard OneRoster URL construction.
+        
+        Args:
+            endpoint: The API endpoint (e.g., "/assessment-items")
+            method: The HTTP method to use
+            data: The request payload for POST/PUT requests
+            params: Query parameters for GET requests
+            
+        Returns:
+            The JSON response from the API or an empty dict if no content
+        """
+        url = urljoin(self.qti_url + "/", endpoint.lstrip('/'))
+        
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+        
+        logger.info("Making request to %s", url)
+        logger.info("Method: %s", method)
+        logger.info("Headers: %s", headers)
+        logger.info("Data: %s", data)
+        logger.info("Params: %s", params)
+        
+        response = requests.request(
+            method=method,
+            url=url,
+            headers=headers,
+            json=data if data else None,
+            params=params
+        )
+        
+        if not response.ok:
+            logger.error("Request failed with status %d", response.status_code)
+            logger.error("Response body: %s", response.text)
+            
+        response.raise_for_status()
+        
+        # Handle empty responses
+        if not response.text.strip():
+            logger.info("Empty response received from %s", url)
+            return {"message": "Success (empty response)"}
+            
+        try:
+            response_data = response.json()
+            logger.info("Successful response from %s", url)
+            return response_data
+        except json.JSONDecodeError as e:
+            logger.warning(f"Could not parse response as JSON: {e}")
+            return {"message": "Success (non-JSON response)", "text": response.text}
+        
+    def _load_api_modules(self):
+        """Dynamically load all API modules for QTI."""
+        try:
+            # Import the assessment_items API module
+            from ..api.assessment_items import AssessmentItemsAPI
+            
+            # Register API classes with QTI URL
+            self._api_registry["assessment_items"] = AssessmentItemsAPI(None, self.qti_url)
+            logger.info("Registered AssessmentItemsAPI with QTI URL: %s", self.qti_url)
+        except ImportError as e:
+            logger.error(f"Could not import QTI API modules: {e}")
+    
+    def __getattr__(self, name):
+        """Dynamically access API classes by name."""
+        if name in self._api_registry:
+            return self._api_registry[name]
+        
+        raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
+
 class TimeBackClient:
     """Main client for TimeBack API.
     
@@ -301,18 +408,26 @@ class TimeBackClient:
         >>> users = client.rostering.users.list_users()
         >>> grades = client.gradebook.get_grades()  # Coming soon
         >>> resources = client.resources.list_resources()  # Coming soon
+        >>> qti_items = client.qti.assessment_items.list_assessment_items()  # Using QTI API
     """
     
-    # Default staging URL
+    # Default staging URL for OneRoster
     DEFAULT_URL = "http://oneroster-staging.us-west-2.elasticbeanstalk.com"
     
-    def __init__(self, api_url: str = None):
-        """Initialize TimeBack client with API URL.
+    # Default staging URL for QTI API
+    DEFAULT_QTI_URL = "https://alpha-qti-api-43487de62e73.herokuapp.com/api"
+    
+    def __init__(self, api_url: str = None, qti_api_url: str = None):
+        """Initialize TimeBack client with API URLs.
         
         Args:
-            api_url: The base URL of the TimeBack API. If not provided, uses the default staging URL.
+            api_url: The base URL of the TimeBack OneRoster API. If not provided, uses the default staging URL.
+            qti_api_url: The base URL of the QTI API. If not provided, uses the default QTI staging URL.
         """
         self.api_url = (api_url or self.DEFAULT_URL).rstrip('/')
+        self.qti_api_url = (qti_api_url or self.DEFAULT_QTI_URL).rstrip('/')
+        
         self.rostering = RosteringService(self.api_url)
         self.gradebook = GradebookService(self.api_url)
-        self.resources = ResourcesService(self.api_url) 
+        self.resources = ResourcesService(self.api_url)
+        self.qti = QTIService(self.api_url, self.qti_api_url) 
