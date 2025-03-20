@@ -6,7 +6,7 @@ import uuid
 from timeback_client.models.user import User, Address, UserRole, RoleAssignment, OrgRef
 from timeback_client.api.users import UsersAPI
 
-STAGING_URL = "http://oneroster-staging.us-west-2.elasticbeanstalk.com"
+STAGING_URL = "http://staging.alpha-1edtech.com"
 TEST_ORG_ID = "f47ac10b-58cc-4372-a567-0e02b2c3d479"  # Default test org ID
 
 # Configure logging

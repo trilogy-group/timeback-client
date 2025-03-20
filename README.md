@@ -164,7 +164,7 @@ resources = client.resources
 The client follows the OneRoster 1.2 API structure:
 
 ```
-Base URL (http://oneroster-staging.us-west-2.elasticbeanstalk.com)
+Base URL (http://staging.alpha-1edtech.com/)
 └── /ims/oneroster
     ├── /rostering/v1p2
     │   ├── /users

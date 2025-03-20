@@ -4,7 +4,7 @@ import pytest
 import json
 from timeback_client import TimeBackClient, RosteringService
 
-STAGING_URL = "http://oneroster-staging.us-west-2.elasticbeanstalk.com"
+STAGING_URL = "http://staging.alpha-1edtech.com"
 
 def test_client_initialization():
     """Test that the client initializes correctly."""

@@ -9,7 +9,7 @@ The client is organized into three main services:
 
 Example:
     >>> from timeback_client import TimeBackClient
-    >>> client = TimeBackClient("http://oneroster-staging.us-west-2.elasticbeanstalk.com")
+    >>> client = TimeBackClient("http://staging.alpha-1edtech.com/")
     >>> users = client.rostering.users.list_users(limit=10)
     >>> user = client.rostering.users.get_user("user-id")
 """
@@ -31,7 +31,7 @@ class TimeBackService:
     including URL construction and request handling.
     
     Args:
-        base_url: The base URL of the TimeBack API (e.g., http://oneroster-staging.us-west-2.elasticbeanstalk.com)
+        base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
         service: The service name (rostering, gradebook, or resources)
     """
     
@@ -39,7 +39,7 @@ class TimeBackService:
         """Initialize service with base URL and service name.
         
         Args:
-            base_url: The base URL of the TimeBack API
+            base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
             service: The service name (rostering, gradebook, or resources)
         """
         # Handle None for base_url
@@ -164,7 +164,7 @@ class RosteringService(TimeBackService):
     specialized API classes for each entity type.
     
     Example:
-        >>> client = TimeBackClient("http://oneroster-staging.us-west-2.elasticbeanstalk.com")
+        >>> client = TimeBackClient("http://staging.alpha-1edtech.com/")
         >>> rostering = client.rostering
         >>> users = rostering.users.list_users(limit=10)
         >>> orgs = rostering.orgs.list_orgs()  # When implemented
@@ -174,7 +174,7 @@ class RosteringService(TimeBackService):
         """Initialize rostering service.
         
         Args:
-            base_url: The base URL of the TimeBack API
+            base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
         """
         super().__init__(base_url, "rostering")
         self._api_registry = {}
@@ -267,7 +267,7 @@ class GradebookService(TimeBackService):
         """Initialize gradebook service.
         
         Args:
-            base_url: The base URL of the TimeBack API
+            base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
         """
         super().__init__(base_url, "gradebook")
 
@@ -286,7 +286,7 @@ class ResourcesService(TimeBackService):
         """Initialize resources service.
         
         Args:
-            base_url: The base URL of the TimeBack API
+            base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
         """
         super().__init__(base_url, "resources")
 
@@ -304,7 +304,7 @@ class QTIService(TimeBackService):
         """Initialize QTI service.
         
         Args:
-            base_url: The base URL of the TimeBack API (not used directly by QTI service)
+            base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
             qti_api_url: The base URL of the QTI API. If not provided, uses the default staging URL.
         """
         # QTI service doesn't use the standard OneRoster base URL
@@ -404,7 +404,7 @@ class TimeBackClient:
     service clients.
     
     Example:
-        >>> client = TimeBackClient()  # Uses default staging URL
+        >>> client = TimeBackClient("http://staging.alpha-1edtech.com/")
         >>> users = client.rostering.users.list_users()
         >>> grades = client.gradebook.get_grades()  # Coming soon
         >>> resources = client.resources.list_resources()  # Coming soon
@@ -412,7 +412,7 @@ class TimeBackClient:
     """
     
     # Default staging URL for OneRoster
-    DEFAULT_URL = "http://oneroster-staging.us-west-2.elasticbeanstalk.com"
+    DEFAULT_URL = "http://staging.alpha-1edtech.com/"
     
     # Default staging URL for QTI API
     DEFAULT_QTI_URL = "https://alpha-qti-api-43487de62e73.herokuapp.com/api"
