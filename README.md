@@ -250,4 +250,81 @@ For release procedures and versioning guidelines, see [RELEASE.md](RELEASE.md).
 2. Never commit API keys or sensitive data to version control
 3. Use environment variables for configuration
 4. Implement proper error handling to avoid exposing sensitive information
-5. Validate and sanitize all input data before making API calls 
+5. Validate and sanitize all input data before making API calls
+
+## Environment Configuration
+
+The TimeBack client supports both staging and production environments. You can specify the environment when initializing the client:
+
+```python
+from timeback_client import TimeBackClient
+
+# For staging (default)
+client = TimeBackClient(
+    environment="staging",
+    client_id="your-staging-client-id",
+    client_secret="your-staging-client-secret"
+)
+
+# For production
+client = TimeBackClient(
+    environment="production",
+    client_id="your-production-client-id",
+    client_secret="your-production-client-secret"
+)
+```
+
+### Authentication
+
+The client uses OAuth2 client credentials flow for authentication. You'll need to request Client ID and Secret pairs from AE Studio for both staging and production environments. Contact:
+- carlos@ae.studio
+- wellington.santos@ae.studio
+- ege@ae.studio
+
+The client will automatically handle token generation and renewal.
+
+### Migrating from Staging to Production
+
+The package includes a migration script to help transfer data from staging to production. To migrate users:
+
+1. First, request production credentials from AE Studio
+2. Run the migration script:
+
+```bash
+python -m timeback_client.scripts.migrate_users \
+    --staging-client-id YOUR_STAGING_CLIENT_ID \
+    --staging-client-secret YOUR_STAGING_CLIENT_SECRET \
+    --prod-client-id YOUR_PROD_CLIENT_ID \
+    --prod-client-secret YOUR_PROD_CLIENT_SECRET
+```
+
+You can also use the `--dry-run` flag to see what would be migrated without making any changes.
+
+The script will:
+1. Fetch all users from staging
+2. Create them in production
+3. Verify the migration was successful
+4. Provide detailed logs of the process
+
+You can also use the migration functions in your own code:
+
+```python
+from timeback_client import TimeBackClient, migrate_users, verify_migration
+
+staging_client = TimeBackClient(
+    environment="staging",
+    client_id="staging-client-id",
+    client_secret="staging-client-secret"
+)
+
+prod_client = TimeBackClient(
+    environment="production",
+    client_id="prod-client-id",
+    client_secret="prod-client-secret"
+)
+
+# Perform migration
+total, successful, failed = migrate_users(staging_client, prod_client)
+
+# Verify migration
+success = verify_migration(staging_client, prod_client) 

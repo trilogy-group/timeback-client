@@ -81,6 +81,13 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ## Version History
 
+### v0.2.5
+- Added OrgsAPI class for managing organizations
+- Added support for organization creation and retrieval
+- Fixed migration script to handle organization dependencies
+- Added better error handling for 422 responses
+- Improved metadata handling during user migration
+
 ### v0.2.3
 - Fixed error handling in delete_user method to properly handle empty responses
 - Added special handling for 404 errors during deletion (treating them as success)

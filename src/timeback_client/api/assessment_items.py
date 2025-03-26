@@ -19,16 +19,17 @@ logger = logging.getLogger(__name__)
 class AssessmentItemsAPI(TimeBackService):
     """API client for assessment item endpoints."""
     
-    def __init__(self, base_url: str = None, qti_api_url: str = None):
+    def __init__(self, base_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
         """Initialize the assessment items API client.
         
         Args:
-            base_url: The base URL of the TimeBack API (not used directly)
-            qti_api_url: The base URL of the QTI API
+            base_url: The base URL of the QTI API
+            client_id: OAuth2 client ID for authentication
+            client_secret: OAuth2 client secret for authentication
         """
         # QTI API has a different base URL than OneRoster
-        self.qti_url = qti_api_url
-        super().__init__(base_url, "qti")
+        self.qti_url = base_url
+        super().__init__(base_url, "qti", client_id=client_id, client_secret=client_secret)
     
     def _make_request(
         self, 

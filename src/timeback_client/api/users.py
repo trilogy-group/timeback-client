@@ -17,13 +17,15 @@ logger = logging.getLogger(__name__)
 class UsersAPI(TimeBackService):
     """API client for user-related endpoints."""
     
-    def __init__(self, base_url: str):
+    def __init__(self, base_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
         """Initialize the users API client.
         
         Args:
             base_url: The base URL of the TimeBack API
+            client_id: OAuth2 client ID for authentication
+            client_secret: OAuth2 client secret for authentication
         """
-        super().__init__(base_url, "rostering")
+        super().__init__(base_url, "rostering", client_id=client_id, client_secret=client_secret)
     
     def create_user(self, user: Union[User, Dict[str, Any]]) -> Dict[str, Any]:
         """Create a new user in the TimeBack API.

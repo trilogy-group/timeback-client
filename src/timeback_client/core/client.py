@@ -16,11 +16,12 @@ Example:
 
 from typing import Optional, Dict, Any, List, Type
 import requests
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 import logging
 import importlib
 import inspect
 import json
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -33,19 +34,65 @@ class TimeBackService:
     Args:
         base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
         service: The service name (rostering, gradebook, or resources)
+        client_id: OAuth2 client ID for authentication
+        client_secret: OAuth2 client secret for authentication
     """
     
-    def __init__(self, base_url: str, service: str):
+    def __init__(self, base_url: str, service: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
         """Initialize service with base URL and service name.
         
         Args:
-            base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
+            base_url: The base URL of the TimeBack API
             service: The service name (rostering, gradebook, or resources)
+            client_id: OAuth2 client ID for authentication
+            client_secret: OAuth2 client secret for authentication
         """
-        # Handle None for base_url
         self.base_url = "" if base_url is None else base_url.rstrip('/')
         self.service = service
         self.api_path = f"/ims/oneroster/{service}/v1p2"
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self._access_token = None
+        self._token_expiry = None
+        
+    def _get_auth_token(self) -> str:
+        """Get a valid OAuth2 access token.
+        
+        Returns:
+            str: The access token
+            
+        Raises:
+            requests.exceptions.RequestException: If token request fails
+        """
+        if self._access_token and self._token_expiry and time.time() < self._token_expiry:
+            return self._access_token
+            
+        if not (self.client_id and self.client_secret):
+            return None
+            
+        # Extract domain from base_url to determine IDP URL
+        domain = urlparse(self.base_url).netloc
+        if "staging" in domain or "development" in domain:
+            idp_url = "https://alpha-auth-development-idp.auth.us-west-2.amazoncognito.com"
+        else:
+            idp_url = "https://alpha-auth-production-idp.auth.us-west-2.amazoncognito.com"
+            
+        response = requests.post(
+            f"{idp_url}/oauth2/token",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data={
+                "grant_type": "client_credentials",
+                "client_id": self.client_id,
+                "client_secret": self.client_secret
+            }
+        )
+        response.raise_for_status()
+        
+        token_data = response.json()
+        self._access_token = token_data["access_token"]
+        self._token_expiry = time.time() + token_data["expires_in"] - 60  # Refresh 1 minute early
+        
+        return self._access_token
         
     def _make_request(
         self, 
@@ -78,9 +125,14 @@ class TimeBackService:
             "Accept": "application/json"
         }
         
+        # Add authorization if credentials are provided
+        token = self._get_auth_token()
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        
         logger.info("Making request to %s", url)
         logger.info("Method: %s", method)
-        logger.info("Headers: %s", headers)
+        logger.info("Headers: %s", {k: v for k, v in headers.items() if k != 'Authorization'})
         logger.info("Data: %s", data)
         logger.info("Params: %s", params)
         
@@ -170,13 +222,15 @@ class RosteringService(TimeBackService):
         >>> orgs = rostering.orgs.list_orgs()  # When implemented
     """
     
-    def __init__(self, base_url: str):
+    def __init__(self, base_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
         """Initialize rostering service.
         
         Args:
             base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
+            client_id: OAuth2 client ID for authentication
+            client_secret: OAuth2 client secret for authentication
         """
-        super().__init__(base_url, "rostering")
+        super().__init__(base_url, "rostering", client_id, client_secret)
         self._api_registry = {}
         self._load_api_modules()
         
@@ -197,7 +251,7 @@ class RosteringService(TimeBackService):
                         if issubclass(obj, TimeBackService) and obj != TimeBackService:
                             # Register the API class
                             entity_name = module_name.lower()
-                            self._api_registry[entity_name] = obj(self.base_url)
+                            self._api_registry[entity_name] = obj(self.base_url, self.client_id, self.client_secret)
                             logger.info(f"Registered API class {name} for entity {entity_name}")
                 except ImportError as e:
                     logger.warning(f"Could not import API module {module_name}: {e}")
@@ -211,13 +265,13 @@ class RosteringService(TimeBackService):
         try:
             # Import and register UsersAPI
             from ..api.users import UsersAPI
-            self._api_registry["users"] = UsersAPI(self.base_url)
+            self._api_registry["users"] = UsersAPI(self.base_url, self.client_id, self.client_secret)
             logger.info("Registered UsersAPI")
             
-            # Add more API classes here as they are implemented
-            # Example:
-            # from ..api.orgs import OrgsAPI
-            # self._api_registry["orgs"] = OrgsAPI(self.base_url)
+            # Import and register OrgsAPI
+            from ..api.orgs import OrgsAPI
+            self._api_registry["orgs"] = OrgsAPI(self.base_url, self.client_id, self.client_secret)
+            logger.info("Registered OrgsAPI")
         except ImportError as e:
             logger.error(f"Could not import known API classes: {e}")
     
@@ -263,13 +317,15 @@ class GradebookService(TimeBackService):
         in a future version.
     """
     
-    def __init__(self, base_url: str):
+    def __init__(self, base_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
         """Initialize gradebook service.
         
         Args:
             base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
+            client_id: OAuth2 client ID for authentication
+            client_secret: OAuth2 client secret for authentication
         """
-        super().__init__(base_url, "gradebook")
+        super().__init__(base_url, "gradebook", client_id, client_secret)
 
 class ResourcesService(TimeBackService):
     """Client for TimeBack Resources API.
@@ -282,13 +338,15 @@ class ResourcesService(TimeBackService):
         in a future version.
     """
     
-    def __init__(self, base_url: str):
+    def __init__(self, base_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
         """Initialize resources service.
         
         Args:
             base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
+            client_id: OAuth2 client ID for authentication
+            client_secret: OAuth2 client secret for authentication
         """
-        super().__init__(base_url, "resources")
+        super().__init__(base_url, "resources", client_id, client_secret)
 
 class QTIService(TimeBackService):
     """Client for TimeBack QTI API.
@@ -300,83 +358,24 @@ class QTIService(TimeBackService):
     # Default QTI staging URL
     DEFAULT_QTI_URL = "https://alpha-qti-api-43487de62e73.herokuapp.com/api"
     
-    def __init__(self, base_url: str = None, qti_api_url: str = None):
+    def __init__(self, base_url: str, qti_api_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
         """Initialize QTI service.
         
         Args:
             base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
             qti_api_url: The base URL of the QTI API. If not provided, uses the default staging URL.
+            client_id: OAuth2 client ID for authentication
+            client_secret: OAuth2 client secret for authentication
         """
         # QTI service doesn't use the standard OneRoster base URL
         # Instead it has its own API endpoint
         self.qti_url = (qti_api_url or self.DEFAULT_QTI_URL).rstrip('/')
         
         # We still call the parent constructor, but override the methods to use qti_url
-        super().__init__(base_url, "qti")
+        super().__init__(base_url, "qti", client_id, client_secret)
         self._api_registry = {}
         self._load_api_modules()
     
-    def _make_request(
-        self, 
-        endpoint: str, 
-        method: str = "GET", 
-        data: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """Make request to QTI API.
-        
-        Override the parent _make_request method to use the QTI URL instead of the
-        standard OneRoster URL construction.
-        
-        Args:
-            endpoint: The API endpoint (e.g., "/assessment-items")
-            method: The HTTP method to use
-            data: The request payload for POST/PUT requests
-            params: Query parameters for GET requests
-            
-        Returns:
-            The JSON response from the API or an empty dict if no content
-        """
-        url = urljoin(self.qti_url + "/", endpoint.lstrip('/'))
-        
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        }
-        
-        logger.info("Making request to %s", url)
-        logger.info("Method: %s", method)
-        logger.info("Headers: %s", headers)
-        logger.info("Data: %s", data)
-        logger.info("Params: %s", params)
-        
-        response = requests.request(
-            method=method,
-            url=url,
-            headers=headers,
-            json=data if data else None,
-            params=params
-        )
-        
-        if not response.ok:
-            logger.error("Request failed with status %d", response.status_code)
-            logger.error("Response body: %s", response.text)
-            
-        response.raise_for_status()
-        
-        # Handle empty responses
-        if not response.text.strip():
-            logger.info("Empty response received from %s", url)
-            return {"message": "Success (empty response)"}
-            
-        try:
-            response_data = response.json()
-            logger.info("Successful response from %s", url)
-            return response_data
-        except json.JSONDecodeError as e:
-            logger.warning(f"Could not parse response as JSON: {e}")
-            return {"message": "Success (non-JSON response)", "text": response.text}
-        
     def _load_api_modules(self):
         """Dynamically load all API modules for QTI."""
         try:
@@ -384,7 +383,7 @@ class QTIService(TimeBackService):
             from ..api.assessment_items import AssessmentItemsAPI
             
             # Register API classes with QTI URL
-            self._api_registry["assessment_items"] = AssessmentItemsAPI(None, self.qti_url)
+            self._api_registry["assessment_items"] = AssessmentItemsAPI(self.qti_url, self.client_id, self.client_secret)
             logger.info("Registered AssessmentItemsAPI with QTI URL: %s", self.qti_url)
         except ImportError as e:
             logger.error(f"Could not import QTI API modules: {e}")
@@ -411,23 +410,36 @@ class TimeBackClient:
         >>> qti_items = client.qti.assessment_items.list_assessment_items()  # Using QTI API
     """
     
-    # Default staging URL for OneRoster
-    DEFAULT_URL = "http://staging.alpha-1edtech.com/"
+    # Update default URLs
+    DEFAULT_STAGING_URL = "http://staging.alpha-1edtech.com/"
+    DEFAULT_PRODUCTION_URL = "https://alpha-1edtech.com/"  # Updated to use HTTPS
+    DEFAULT_QTI_URL = "https://qti.alpha-1edtech.com"  # QTI only has production
     
-    # Default staging URL for QTI API
-    DEFAULT_QTI_URL = "https://alpha-qti-api-43487de62e73.herokuapp.com/api"
-    
-    def __init__(self, api_url: str = None, qti_api_url: str = None):
-        """Initialize TimeBack client with API URLs.
+    def __init__(
+        self, 
+        api_url: Optional[str] = None,
+        qti_api_url: Optional[str] = None,
+        client_id: Optional[str] = None,
+        client_secret: Optional[str] = None,
+        environment: str = "staging"
+    ):
+        """Initialize TimeBack client with API URLs and authentication.
         
         Args:
-            api_url: The base URL of the TimeBack OneRoster API. If not provided, uses the default staging URL.
-            qti_api_url: The base URL of the QTI API. If not provided, uses the default QTI staging URL.
+            api_url: The base URL of the TimeBack OneRoster API. If not provided, uses the default URL for the environment.
+            qti_api_url: The base URL of the QTI API. If not provided, uses the default production URL.
+            client_id: OAuth2 client ID for authentication
+            client_secret: OAuth2 client secret for authentication
+            environment: Either "staging" or "production". Determines default URLs if not provided.
         """
-        self.api_url = (api_url or self.DEFAULT_URL).rstrip('/')
+        # Determine default URL based on environment
+        default_api_url = self.DEFAULT_PRODUCTION_URL if environment == "production" else self.DEFAULT_STAGING_URL
+            
+        self.api_url = (api_url or default_api_url).rstrip('/')
         self.qti_api_url = (qti_api_url or self.DEFAULT_QTI_URL).rstrip('/')
         
-        self.rostering = RosteringService(self.api_url)
-        self.gradebook = GradebookService(self.api_url)
-        self.resources = ResourcesService(self.api_url)
-        self.qti = QTIService(self.api_url, self.qti_api_url) 
+        # Initialize services with authentication
+        self.rostering = RosteringService(self.api_url, client_id, client_secret)
+        self.gradebook = GradebookService(self.api_url, client_id, client_secret)
+        self.resources = ResourcesService(self.api_url, client_id, client_secret)
+        self.qti = QTIService(self.api_url, self.qti_api_url, client_id, client_secret) 

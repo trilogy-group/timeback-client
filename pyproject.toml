@@ -1,13 +1,13 @@
 [project]
 name = "timeback-client"
-version = "0.2.4"
+version = "0.2.5"
 description = "A Python client for the TimeBack API (OneRoster 1.2 implementation)"
 authors = [
     {name = "Amanda Shipka"}
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = "^3.8"
+requires-python = ">=3.8"
 dependencies = [
     "requests (>=2.32.3,<3.0.0)",
     "pytz (>=2025.1,<2026.0)",
@@ -16,7 +16,7 @@ dependencies = [
 
 [tool.poetry]
 name = "timeback-client"
-version = "0.2.4"
+version = "0.2.5"
 description = "A Python client for the TimeBack API (OneRoster 1.2 implementation)"
 authors = ["Your Name <your.email@example.com>"]
 readme = "README.md"

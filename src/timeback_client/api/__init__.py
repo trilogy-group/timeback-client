@@ -7,8 +7,8 @@ in the OneRoster specification.
 __all__ = [
     "users",
     "assessment_items",  # QTI assessment items API
+    "orgs",  # Organization management API
     # Add more modules as they are implemented
-    # "orgs",
     # "classes",
     # "courses",
     # "enrollments",
