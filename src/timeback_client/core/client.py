@@ -409,7 +409,7 @@ class TimeBackClient:
     
     # Update default URLs
     DEFAULT_STAGING_URL = "http://staging.alpha-1edtech.com/"
-    DEFAULT_PRODUCTION_URL = "https://alpha-1edtech.com/"  # Updated to use HTTPS
+    DEFAULT_PRODUCTION_URL = "https://api.alpha-1edtech.com/"  # Updated to use api subdomain
     DEFAULT_QTI_URL = "https://qti.alpha-1edtech.com"  # QTI only has production
     
     def __init__(
