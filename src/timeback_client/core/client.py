@@ -70,12 +70,9 @@ class TimeBackService:
         if not (self.client_id and self.client_secret):
             return None
             
-        # Extract domain from base_url to determine IDP URL
-        domain = urlparse(self.base_url).netloc
-        if "staging" in domain or "development" in domain:
-            idp_url = "https://alpha-auth-development-idp.auth.us-west-2.amazoncognito.com"
-        else:
-            idp_url = "https://alpha-auth-production-idp.auth.us-west-2.amazoncognito.com"
+        # Always use production IDP URL
+        idp_url = "https://alpha-auth-production-idp.auth.us-west-2.amazoncognito.com"
+        logger.info(f"Using production IDP URL for authentication: {idp_url}")
             
         response = requests.post(
             f"{idp_url}/oauth2/token",
@@ -403,7 +400,7 @@ class TimeBackClient:
     service clients.
     
     Example:
-        >>> client = TimeBackClient("http://staging.alpha-1edtech.com/")
+        >>> client = TimeBackClient()
         >>> users = client.rostering.users.list_users()
         >>> grades = client.gradebook.get_grades()  # Coming soon
         >>> resources = client.resources.list_resources()  # Coming soon
@@ -421,22 +418,23 @@ class TimeBackClient:
         qti_api_url: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
-        environment: str = "staging"
+        environment: str = "production"  # Default to production
     ):
         """Initialize TimeBack client with API URLs and authentication.
         
         Args:
-            api_url: The base URL of the TimeBack OneRoster API. If not provided, uses the default URL for the environment.
+            api_url: The base URL of the TimeBack OneRoster API. If not provided, uses the production URL.
             qti_api_url: The base URL of the QTI API. If not provided, uses the default production URL.
             client_id: OAuth2 client ID for authentication
             client_secret: OAuth2 client secret for authentication
-            environment: Either "staging" or "production". Determines default URLs if not provided.
+            environment: Parameter kept for backward compatibility, but ignored. Always uses production.
         """
-        # Determine default URL based on environment
-        default_api_url = self.DEFAULT_PRODUCTION_URL if environment == "production" else self.DEFAULT_STAGING_URL
-            
-        self.api_url = (api_url or default_api_url).rstrip('/')
+        # Force production URL regardless of environment parameter
+        self.api_url = (api_url or self.DEFAULT_PRODUCTION_URL).rstrip('/')
         self.qti_api_url = (qti_api_url or self.DEFAULT_QTI_URL).rstrip('/')
+        
+        # Log the URL being used
+        logger.info(f"Initializing TimeBack client with production URL: {self.api_url}")
         
         # Initialize services with authentication
         self.rostering = RosteringService(self.api_url, client_id, client_secret)
