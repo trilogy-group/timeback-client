@@ -81,6 +81,12 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ## Version History
 
+### v0.2.6
+- Modified TimeBackClient to always use production environment
+- Forced all API calls to connect to production URL
+- Fixed authentication to always use production IDP
+- Improved logging to show actual environment being used
+
 ### v0.2.5
 - Added OrgsAPI class for managing organizations
 - Added support for organization creation and retrieval
