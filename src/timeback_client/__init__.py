@@ -6,14 +6,11 @@ This package provides a Python client for the TimeBack API, which implements the
 __version__ = "0.2.6"
 
 from .core.client import TimeBackClient, RosteringService, GradebookService, ResourcesService, QTIService
-from .scripts.migrate_users import migrate_users, verify_migration
 
 __all__ = [
     "TimeBackClient",
     "RosteringService",
     "GradebookService",
     "ResourcesService",
-    "QTIService",
-    "migrate_users",
-    "verify_migration"
+    "QTIService"
 ] 

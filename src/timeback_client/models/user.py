@@ -14,7 +14,7 @@ API Endpoints:
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 from enum import Enum
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 import uuid
 import pytz
 
@@ -143,10 +143,13 @@ class User(BaseModel):
     password: Optional[str] = Field(None, description="Top-level password")
     resources: List[ResourceRef] = Field(default_factory=list, description="Associated learning resources")
 
-    @validator('roles')
+    @field_validator('roles')
     def validate_roles(cls, v):
+        """Validate that roles is a list of strings and at least one role is required."""
         if not v:
             raise ValueError('At least one role is required')
+        if not isinstance(v, list):
+            raise ValueError('roles must be a list')
         return v
 
     def to_dict(self) -> Dict[str, Any]:
