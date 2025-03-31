@@ -8,9 +8,9 @@ __all__ = [
     "users",
     "assessment_items",  # QTI assessment items API
     "orgs",  # Organization management API
+    "courses",  # Course management API
     # Add more modules as they are implemented
     # "classes",
-    # "courses",
     # "enrollments",
     # "academicSessions",
     # "demographics",
