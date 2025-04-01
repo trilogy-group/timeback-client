@@ -81,6 +81,18 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ## Version History
 
+### v0.2.9
+- Enhanced logging for client initialization and API calls
+- Added caller tracking for better debugging
+- Added environment validation and logging
+- Improved error handling for API responses
+- Added detailed logging for component operations
+
+### v0.2.8
+- Added support for course and component operations
+- Improved error handling for API responses
+- Enhanced logging for debugging
+
 ### v0.2.6
 - Modified TimeBackClient to always use production environment
 - Forced all API calls to connect to production URL

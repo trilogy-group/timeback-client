@@ -32,6 +32,10 @@ def test_application_create_course():
             "grades": ["4"],
             "subjects": ["Mathematics", "Elementary Education"],
             "subjectCodes": ["MATH", "ELEM"],
+            "org": {
+                "sourcedId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+                "type": "org"
+            },
             "metadata": {
                 "createdBy": "automated-test",
                 "curriculum": "Common Core",
@@ -107,6 +111,10 @@ def test_application_update_course():
             "courseCode": "MATH-4",
             "grades": ["4"],
             "subjects": ["Mathematics"],
+            "org": {
+                "sourcedId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+                "type": "org"
+            },
             "metadata": {
                 "curriculum": "State Standards",
                 "term": "Fall"
@@ -188,19 +196,31 @@ def test_application_filter_courses():
             "title": "Grade 4 Mathematics - Section A",
             "courseCode": "MATH-4A",
             "grades": ["4"],
-            "subjects": ["Mathematics"]
+            "subjects": ["Mathematics"],
+            "org": {
+                "sourcedId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+                "type": "org"
+            }
         },
         {
             "title": "Grade 4 Mathematics - Section B",
             "courseCode": "MATH-4B",
             "grades": ["4"],
-            "subjects": ["Mathematics"]
+            "subjects": ["Mathematics"],
+            "org": {
+                "sourcedId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+                "type": "org"
+            }
         },
         {
             "title": "Grade 4 Science",
             "courseCode": "SCI-4",
             "grades": ["4"],
-            "subjects": ["Science", "STEM"]
+            "subjects": ["Science", "STEM"],
+            "org": {
+                "sourcedId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+                "type": "org"
+            }
         }
     ]
     
