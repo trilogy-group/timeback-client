@@ -126,17 +126,23 @@
     },
     {
       "name": "Course",
+      "description": "A course represents a subject or area of study. It can contain multiple components and is typically associated with an organization (school/district). Courses can be reused across academic terms.",
+      "required": ["sourcedId", "status", "dateLastModified", "title", "orgSourcedId"],
       "fields": [
-        "sourcedId: string (UUID)",
-        "status: string (active|tobedeleted)",
-        "dateLastModified: string (ISO datetime)",
+        "sourcedId: string (UUID, required)",
+        "status: string (active|tobedeleted, required)",
+        "dateLastModified: string (ISO datetime with UTC timezone, required)",
+        "title: string (required)",
+        "orgSourcedId: string (required)",
         "metadata: object",
-        "title: string",
         "courseCode: string",
         "grades: array[string]",
-        "orgSourcedId: string",
         "subjects: array[string]",
-        "subjectCodes: array[string]"
+        "subjectCodes: array[string]",
+        "resources: array[ResourceRef]",
+        "components: array[ComponentRef]",
+        "description: string",
+        "displayName: string"
       ]
     },
     {
@@ -204,6 +210,65 @@
         "countryOfBirthCode: string",
         "stateOfBirthAbbreviation: string",
         "cityOfBirth: string"
+      ]
+    },
+    {
+      "name": "Resource",
+      "description": "Educational resources like videos, documents, or interactive content. Resources are created with a vendorResourceId and receive an allocatedSourcedId from the system. The metadata requirements vary based on the resource type (video, audio, text, etc).",
+      "required": ["sourcedId", "status", "dateLastModified", "title", "vendorResourceId", "importance"],
+      "fields": [
+        "sourcedId: string (UUID, required)",
+        "status: string (active|tobedeleted, required)",
+        "dateLastModified: string (ISO datetime with UTC timezone, required)",
+        "metadata: object (type-specific requirements)",
+        "title: string (required)",
+        "roles: array[string] (primary|secondary)",
+        "importance: string (primary|secondary)",
+        "vendorResourceId: string (required)",
+        "vendorId: string",
+        "applicationId: string"
+      ]
+    },
+    {
+      "name": "ComponentResource",
+      "description": "A resource that is linked to a component",
+      "required": ["sourcedId", "status", "dateLastModified", "title", "courseComponent", "resource"],
+      "fields": [
+        "sourcedId: string (UUID, required)",
+        "status: string (active|tobedeleted, required)",
+        "dateLastModified: string (ISO datetime with UTC timezone, required)",
+        "metadata: object",
+        "title: string (required)",
+        "courseComponent: ComponentRef (required)",
+        "resource: ResourceRef (required)",
+        "sortOrder: integer"
+      ]
+    },
+    {
+      "name": "Component",
+      "description": "Components are building blocks within a course, like units, lessons, or modules. They can contain resources and other components, allowing for hierarchical course structure.",
+      "required": ["sourcedId", "status", "dateLastModified", "title", "courseSourcedId", "type"],
+      "fields": [
+        "sourcedId: string (UUID, required)",
+        "status: string (active|tobedeleted, required)",
+        "dateLastModified: string (ISO datetime with UTC timezone, required)",
+        "metadata: object",
+        "title: string (required)",
+        "course: CourseRef (required)",
+        "courseComponent: CourseComponentRef (optional)",
+        "sortOrder: integer",
+        "prerequisites: array[ComponentRef]",
+        "prerequisiteCriteria: string",
+        "unlockDate: string (ISO datetime)"
+      ]
+    },
+    {
+      "name": "ComponentRef",
+      "description": "Reference to a component, used when linking components to courses or other components",
+      "required": ["href", "sourcedId", "type"],
+      "fields": [
+        "sourcedId: string (required)",
+        "type: string (component, required)"
       ]
     }
   ]

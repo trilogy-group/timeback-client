@@ -329,21 +329,42 @@ class ResourcesService(TimeBackService):
     
     This service handles all learning resource operations
     as defined in the OneRoster 1.2 specification.
-    
-    Note:
-        This service is currently a placeholder and will be implemented
-        in a future version.
     """
     
     def __init__(self, base_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
-        """Initialize resources service.
-        
-        Args:
-            base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
-            client_id: OAuth2 client ID for authentication
-            client_secret: OAuth2 client secret for authentication
-        """
+        """Initialize resources service."""
+        logger.info("Initializing ResourcesService")  # Debug log
         super().__init__(base_url, "resources", client_id, client_secret)
+        self._api_registry = {}
+        self._load_api_modules()
+        logger.info(f"ResourcesService initialized with registry: {self._api_registry}")  # Debug log
+        
+    def _load_api_modules(self):
+        """Dynamically load all API modules for Resources."""
+        try:
+            logger.info("Attempting to load ResourcesAPI")  # Debug log
+            # Import the resources API module
+            from ..api.resources import ResourcesAPI
+            logger.info("Successfully imported ResourcesAPI")  # Debug log
+            
+            # Register API class
+            api_instance = ResourcesAPI(self.base_url, self.client_id, self.client_secret)
+            self._api_registry["resources"] = api_instance
+            logger.info("Registered ResourcesAPI for entity resources")
+            logger.info(f"Available methods on ResourcesAPI: {dir(api_instance)}")  # Debug log
+        except ImportError as e:
+            logger.error(f"Could not import Resources API modules: {str(e)}", exc_info=True)
+        except Exception as e:
+            logger.error(f"Unexpected error loading Resources API: {str(e)}", exc_info=True)
+            
+    def __getattr__(self, name):
+        """Dynamically access API classes by name."""
+        logger.info(f"Attempting to access attribute: {name}")  # Debug log
+        logger.info(f"Available registry keys: {list(self._api_registry.keys())}")  # Debug log
+        if name in self._api_registry:
+            return self._api_registry[name]
+        
+        raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
 
 class QTIService(TimeBackService):
     """Client for TimeBack QTI API.

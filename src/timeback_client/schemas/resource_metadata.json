@@ -1,0 +1,94 @@
+{
+  "resource_types": [
+    {
+      "name": "Video",
+      "description": "Video content like lectures, demonstrations, or educational clips",
+      "required": ["type", "format"],
+      "fields": [
+        "type: string (video, required)",
+        "format: string (mp4|webm|mov, required)",
+        "duration: string (HH:MM:SS.ms)",
+        "captionsAvailable: boolean"
+      ]
+    },
+    {
+      "name": "Audio",
+      "description": "Audio content like podcasts, lectures, or music",
+      "required": ["type", "format"],
+      "fields": [
+        "type: string (audio, required)",
+        "format: string (mp3|wav, required)",
+        "duration: string (HH:MM:SS.ms)",
+        "speaker: string"
+      ]
+    },
+    {
+      "name": "Text",
+      "description": "Text-based content like documents, books, or articles",
+      "required": ["type", "format"],
+      "fields": [
+        "type: string (text, required)",
+        "format: string (pdf|epub|docx|html|markdown, required)",
+        "author: string",
+        "pageCount: integer (min: 1)"
+      ]
+    },
+    {
+      "name": "QTI",
+      "description": "Question and Test Interoperability content",
+      "required": ["type", "subType", "questionType"],
+      "fields": [
+        "type: string (qti, required)",
+        "subType: string (qti-question|qti-test|qti-test-bank, required)",
+        "questionType: string (choice|order|associate|match|hotspot|select-point|graphic-order|graphic-associate|graphic-gap-match|text-entry|extended-text|inline-choice|upload|slider|drawing|media|custom, required)",
+        "difficulty: string (easy|medium|hard)"
+      ]
+    },
+    {
+      "name": "Visual",
+      "description": "Visual content like images, diagrams, or charts",
+      "required": ["type", "format"],
+      "fields": [
+        "type: string (visual, required)",
+        "format: string (png|jpeg|svg|pdf, required)",
+        "resolution: string (WxH format, e.g. 1920x1080)"
+      ]
+    },
+    {
+      "name": "Interactive",
+      "description": "Interactive content that requires user engagement",
+      "required": ["type", "launchUrl", "toolProvider"],
+      "fields": [
+        "type: string (interactive, required)",
+        "launchUrl: string (URI, required)",
+        "toolProvider: string (required)",
+        "instructionalMethod: string (exploratory|direct-instruction)"
+      ]
+    },
+    {
+      "name": "CourseMaterial",
+      "description": "Structured course content and collections",
+      "required": ["type", "subType", "format"],
+      "fields": [
+        "type: string (course-material, required)",
+        "subType: string (unit|course|resource-collection, required)",
+        "format: string (docx|pdf|cc, required)",
+        "author: string",
+        "instructionalMethod: string (direct-instruction|project-based)"
+      ]
+    }
+  ],
+  "common_metadata": {
+    "description": "Fields that can be used with any resource type",
+    "fields": [
+      "subject: string (e.g. Mathematics, Biology)",
+      "grades: array[integer] (1-12)",
+      "language: string (IETF BCP 47 code, e.g. en-US)",
+      "keywords: array[string]",
+      "url: string (URI)",
+      "xp: integer (min: 0)",
+      "skillCodes: array[string]",
+      "learningObjectiveSet: array[{source: string, learningObjectiveResults: array[{learningObjectiveId: string (UUID)}]}]"
+    ]
+  }
+} 

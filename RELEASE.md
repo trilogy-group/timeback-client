@@ -81,6 +81,11 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ## Version History
 
+### v0.2.10
+- Fixed Google Sheets integration to use correct sheet name
+- Enhanced error handling for sheet operations
+- Added better logging for sheet updates
+
 ### v0.2.9
 - Enhanced logging for client initialization and API calls
 - Added caller tracking for better debugging
