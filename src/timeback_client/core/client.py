@@ -236,22 +236,35 @@ class RosteringService(TimeBackService):
         try:
             # Import the api package using absolute import
             api_package = importlib.import_module("timeback_client.api")
+            logger.info("Successfully imported API package")
             
             # Get all modules in the api package
-            for module_name in getattr(api_package, "__all__", []):
+            all_modules = getattr(api_package, "__all__", [])
+            logger.info(f"Found modules in __all__: {all_modules}")
+            
+            for module_name in all_modules:
                 try:
+                    logger.info(f"Attempting to import module: {module_name}")
                     # Import the module using absolute import
                     module = importlib.import_module(f"timeback_client.api.{module_name}")
+                    logger.info(f"Successfully imported module: {module_name}")
                     
                     # Find all classes that inherit from TimeBackService
                     for name, obj in inspect.getmembers(module, inspect.isclass):
+                        logger.info(f"Found class {name} in module {module_name}")
                         if issubclass(obj, TimeBackService) and obj != TimeBackService:
                             # Register the API class
                             entity_name = module_name.lower()
+                            logger.info(f"Registering {name} as {entity_name}")
                             self._api_registry[entity_name] = obj(self.base_url, self.client_id, self.client_secret)
                             logger.info(f"Registered API class {name} for entity {entity_name}")
                 except ImportError as e:
                     logger.warning(f"Could not import API module {module_name}: {e}")
+                    logger.warning(f"Import error details: {str(e)}")
+                    logger.warning(f"Module path: timeback_client.api.{module_name}")
+                    # Log the full traceback for debugging
+                    import traceback
+                    logger.warning(f"Full traceback:\n{traceback.format_exc()}")
         except ImportError as e:
             # If the api package doesn't have __all__, manually register known APIs
             logger.warning(f"Could not import API package: {e}")
@@ -413,6 +426,48 @@ class QTIService(TimeBackService):
         
         raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
 
+class PowerPathService(TimeBackService):
+    """Client for PowerPath-specific API endpoints.
+    
+    This service handles PowerPath-specific operations that don't follow
+    the standard OneRoster URL pattern.
+    """
+    
+    def __init__(self, base_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
+        """Initialize PowerPath service.
+        
+        Args:
+            base_url: The base URL of the TimeBack API
+            client_id: OAuth2 client ID for authentication
+            client_secret: OAuth2 client secret for authentication
+        """
+        # Call parent but override api_path since PowerPath doesn't use OneRoster path
+        super().__init__(base_url, "powerpath", client_id, client_secret)
+        self.api_path = "/powerpath"  # Override the OneRoster path
+        self._api_registry = {}
+        self._load_api_modules()
+        
+    def _load_api_modules(self):
+        """Load PowerPath API modules."""
+        try:
+            from ..api.powerpath import PowerPathAPI
+            # Register API directly since PowerPath is self-contained
+            self._api_registry["powerpath"] = PowerPathAPI(self.base_url, self.client_id, self.client_secret)
+            logger.info("Registered PowerPathAPI")
+        except ImportError as e:
+            logger.error(f"Could not import PowerPath API module: {e}")
+            
+    def __getattr__(self, name):
+        """Access PowerPath API methods directly."""
+        if name in self._api_registry:
+            return self._api_registry[name]
+            
+        # Allow direct access to PowerPath methods for convenience
+        if "powerpath" in self._api_registry:
+            return getattr(self._api_registry["powerpath"], name)
+            
+        raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
+
 class TimeBackClient:
     """Main client for TimeBack API.
     
@@ -426,6 +481,7 @@ class TimeBackClient:
         >>> grades = client.gradebook.get_grades()  # Coming soon
         >>> resources = client.resources.list_resources()  # Coming soon
         >>> qti_items = client.qti.assessment_items.list_assessment_items()  # Using QTI API
+        >>> syllabus = client.powerpath.get_course_syllabus("course-id")  # Using PowerPath API
     """
     
     # Update default URLs
@@ -461,4 +517,5 @@ class TimeBackClient:
         self.rostering = RosteringService(self.api_url, client_id, client_secret)
         self.gradebook = GradebookService(self.api_url, client_id, client_secret)
         self.resources = ResourcesService(self.api_url, client_id, client_secret)
-        self.qti = QTIService(self.api_url, self.qti_api_url, client_id, client_secret) 
+        self.qti = QTIService(self.api_url, self.qti_api_url, client_id, client_secret)
+        self.powerpath = PowerPathService(self.api_url, client_id, client_secret) 

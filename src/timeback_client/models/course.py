@@ -236,10 +236,10 @@ class Course:
         # Optional fields with special handling
         if 'metadata' in data:
             metadata = data.pop('metadata')
-            # Add metadata fields to kwargs
+            
+            # Store metadata directly without nesting it again
             if isinstance(metadata, dict):
-                for k, v in metadata.items():
-                    data[k] = v
+                course_args['metadata'] = metadata
                     
         # Handle reference types
         for field in ['schoolYear']:

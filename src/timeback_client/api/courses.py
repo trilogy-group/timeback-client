@@ -158,33 +158,39 @@ class CoursesAPI(TimeBackService):
         Raises:
             requests.exceptions.HTTPError: If the API request fails
         """
-        # Convert dictionary to Course model if needed
+        # If course is a dictionary with 'course' key, extract the inner dict
         if isinstance(course, dict):
-            # If course_data is a dict with 'course' key, extract the inner dict
             if 'course' in course:
+                request_data = course  # Already wrapped correctly
                 course_dict = course['course']
             else:
+                # Need to wrap it
                 course_dict = course
-                
-            # Create Course model from dict, using course_id if sourcedId isn't set
-            if 'sourcedId' not in course_dict:
-                course_dict['sourcedId'] = course_id
-                
-            # Create Course model from dict
-            course = Course(**course_dict)
+                request_data = {'course': course_dict}
+
+            logger.info(f"Updating course {course_id} with data: {course_dict}")
+            return self._make_request(
+                endpoint=f"/courses/{course_id}",
+                method="PUT",
+                data=request_data
+            )
         
-        # Ensure sourcedId matches the URL parameter
-        if course.sourcedId != course_id:
-            logger.warning(f"Course sourcedId ({course.sourcedId}) doesn't match URL parameter ({course_id})")
-            logger.warning(f"Using URL parameter as the definitive ID")
-            course.sourcedId = course_id
-            
-        # Convert to dictionary and send request
-        return self._make_request(
-            endpoint=f"/courses/{course_id}",
-            method="PUT",
-            data=course.to_dict()
-        )
+        # If it's a Course model instance, convert to dictionary
+        else:
+            # Ensure sourcedId matches the URL parameter
+            if course.sourcedId != course_id:
+                logger.warning(f"Course sourcedId ({course.sourcedId}) doesn't match URL parameter ({course_id})")
+                logger.warning(f"Using URL parameter as the definitive ID")
+                course.sourcedId = course_id
+                
+            # Convert to dictionary and send request
+            request_data = course.to_dict()  # This will wrap in 'course' object
+            logger.info(f"Updating course {course_id} with data: {request_data}")
+            return self._make_request(
+                endpoint=f"/courses/{course_id}",
+                method="PUT",
+                data=request_data
+            )
     
     def delete_course(self, course_id: str) -> Dict[str, Any]:
         """Delete a course from the TimeBack API.

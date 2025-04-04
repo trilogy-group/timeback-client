@@ -14,22 +14,25 @@ class ComponentResource:
     
     Required fields per OneRoster 1.2 spec:
     - sourcedId: Unique identifier for the component resource
-    - status: Current status ('active' or 'tobedeleted')
     - courseComponent: Object containing sourcedId of the parent component
     - resource: Object containing sourcedId of the associated resource
     - title: Display title for the component resource
     
     Optional fields:
+    - status: Current status ('active' or 'tobedeleted')
     - dateLastModified: Timestamp of last modification
     - metadata: Additional metadata as key-value pairs
     - sortOrder: Position within siblings (defaults to 0)
     """
     
+    # Required fields (no defaults)
     sourcedId: str
-    status: str = 'active'
     courseComponent: Dict[str, str]  # Must contain sourcedId
     resource: Dict[str, str]  # Must contain sourcedId
     title: str
+    
+    # Optional fields (with defaults)
+    status: str = 'active'
     dateLastModified: Optional[datetime] = None
     metadata: Optional[Dict[str, Any]] = field(default_factory=dict)
     sortOrder: int = 0

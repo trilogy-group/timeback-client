@@ -218,4 +218,70 @@ class UsersAPI(TimeBackService):
             if isinstance(e, requests.exceptions.HTTPError) and hasattr(e, 'response') and e.response and e.response.status_code == 404:
                 logger.info(f"User {user_id} not found, considering delete successful")
                 return {"message": f"User {user_id} not found or already deleted"}
-            raise 
+            raise
+
+    def list_students(
+        self,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        sort: Optional[str] = None,
+        order_by: Optional[str] = None,
+        filter: Optional[str] = None,
+        fields: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """List students using the OneRoster v1.2 students endpoint.
+        
+        DEPRECATED: This method has been moved to the StudentsAPI class.
+        Please use StudentsAPI.list_students() instead.
+        
+        This method uses the dedicated students endpoint which automatically filters
+        for users with the student role. It supports all standard OneRoster filtering
+        and sorting capabilities including dot notation for nested fields.
+        
+        Args:
+            limit: Maximum number of students to return
+            offset: Number of students to skip
+            sort: Field to sort by (e.g. 'familyName' or 'metadata.grade')
+            order_by: Sort order ('asc' or 'desc')
+            filter: Filter expression (e.g. "status='active'")
+            fields: Fields to return (e.g. ['sourcedId', 'givenName'])
+            
+        Returns:
+            Dictionary containing students and pagination information
+            
+        Example:
+            # Get all active students sorted by grade
+            api.list_students(
+                filter="status='active'",
+                sort='metadata.grade',
+                order_by='asc',
+                fields=['sourcedId', 'givenName', 'familyName', 'email']
+            )
+            
+            # Filter by metadata field
+            api.list_students(
+                filter="metadata.emergencyContact='true'"
+            )
+        """
+        import warnings
+        warnings.warn(
+            "UsersAPI.list_students is deprecated. Please use StudentsAPI.list_students instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        
+        params = {}
+        if limit is not None:
+            params['limit'] = limit
+        if offset is not None:
+            params['offset'] = offset
+        if sort:
+            params['sort'] = sort
+        if order_by:
+            params['orderBy'] = order_by
+        if filter:
+            params['filter'] = filter
+        if fields:
+            params['fields'] = ','.join(fields)
+            
+        return self._make_request("/students", params=params) 

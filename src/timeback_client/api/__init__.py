@@ -10,9 +10,10 @@ __all__ = [
     "orgs",  # Organization management API
     "courses",  # Course management API
     "components",  # Course component management API (units, lessons, etc.)
-    # Add more modules as they are implemented
-    # "classes",
-    # "enrollments",
-    # "academicSessions",
-    # "demographics",
+    "resources",
+    "academic_sessions",  # Add academic sessions module
+    "classes",
+    "enrollments",
+    "component_resources",  # Component resource management API
+    "students",
 ]

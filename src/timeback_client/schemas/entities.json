@@ -3,35 +3,31 @@
     {
       "name": "User",
       "description": "Users, Teachers and Students are human beings that are teaching or studying in a class respectively. A single User class represents both teachers and students with role property distinguishing the user's role. When creating a user, the API returns a sourcedIdPairs object mapping between suppliedSourcedId (provided) and allocatedSourcedId (assigned).",
-      "required": ["sourcedId", "status", "dateLastModified", "enabledUser", "givenName", "familyName", "roles"],
+      "required": ["sourcedId", "status", "enabledUser", "givenName", "familyName", "roles"],
       "fields": [
         "sourcedId: string (UUID, required)",
         "status: string (active|tobedeleted, required)",
         "dateLastModified: string (ISO datetime with UTC timezone, required)",
         "metadata: object",
+        "userMasterIdentifier: string",
+        "username: string (legacy)",
+        "userIds: array[UserId]",
         "enabledUser: boolean (required)",
         "givenName: string (required)",
         "familyName: string (required)",
-        "roles: array[RoleAssignment] (required, min: 1)",
-        "email: string (email format)",
-        "username: string (legacy)",
-        "userMasterIdentifier: string",
-        "userIds: array[UserId]",
         "middleName: string",
+        "roles: array[RoleAssignment] (required, min: 1)",
+        "agents: array[UserRef]",
+        "primaryOrg: OrgRef",
+        "email: string (email format)",        
         "preferredFirstName: string",
         "preferredMiddleName: string",
         "preferredLastName: string",
         "pronouns: string",
-        "userProfiles: array[UserProfile]",
-        "primaryOrg: OrgRef",
-        "identifier: string (legacy)",
-        "sms: string",
-        "agents: array[UserRef]",
         "grades: array[string]",
         "password: string (encrypted)",
-        "resources: array[ResourceRef]",
-        "phone: string (in metadata)",
-        "address: Address (in metadata)"
+        "sms: string",
+        "phone: string"
       ]
     },
     {
@@ -113,15 +109,17 @@
     },
     {
       "name": "Organization",
+      "description": "Represents an organization in the system such as a department, school, district, or other educational institution.",
+      "required": ["name", "type"],
       "fields": [
         "sourcedId: string (UUID)",
-        "status: string (active|tobedeleted)",
+        "status: string (active|tobedeleted, default: active)",
         "dateLastModified: string (ISO datetime)",
         "metadata: object",
-        "name: string",
-        "type: string (school|district|state|national|other)",
+        "name: string (required)",
+        "type: string (department|school|district|local|state|national, required)",
         "identifier: string",
-        "parentSourcedId: string (optional)"
+        "parent: object (properties: sourcedId: string)"
       ]
     },
     {
@@ -147,47 +145,76 @@
     },
     {
       "name": "Class",
+      "description": "A class represents a specific instance of a course, typically for a particular term/semester. Classes are what students actually enroll in, not courses directly. A course can have multiple classes across different terms.",
+      "required": ["sourcedId", "status", "dateLastModified", "title", "course", "org", "terms"],
       "fields": [
-        "sourcedId: string (UUID)",
-        "status: string (active|tobedeleted)",
-        "dateLastModified: string (ISO datetime)",
+        "sourcedId: string (UUID, required)",
+        "status: string (active|tobedeleted, required)",
+        "dateLastModified: string (ISO datetime with UTC timezone, required)",
         "metadata: object",
-        "title: string",
+        "title: string (required)",
         "classCode: string",
-        "classType: string",
-        "courseSourcedId: string",
-        "schoolSourcedId: string",
-        "termSourcedIds: array[string]"
+        "classType: string (homeroom|scheduled)",
+        "location: string",
+        "grades: array[string]",
+        "subjects: array[string]",
+        "course: object (required, properties: sourcedId: string)",
+        "org: object (required, properties: sourcedId: string)",
+        "subjectCodes: array[string]",
+        "periods: array[string]",
+        "resources: array[object] (properties: sourcedId: string)",
+        "terms: array[object] (required, properties: sourcedId: string)"
+      ]
+    },
+    {
+      "name": "CourseRef",
+      "description": "Reference to a course, used when linking classes to courses",
+      "required": ["sourcedId"],
+      "fields": [
+        "sourcedId: string (required)"
+      ]
+    },
+    {
+      "name": "TermRef",
+      "description": "Reference to an academic term/session",
+      "required": ["sourcedId"],
+      "fields": [
+        "sourcedId: string (required)"
       ]
     },
     {
       "name": "Enrollment",
+      "description": "Represents a student or teacher's enrollment in a class. Enrollments link users to classes with a specific role and period of time.",
+      "required": ["sourcedId", "status", "dateLastModified", "role", "user", "class"],
       "fields": [
-        "sourcedId: string (UUID)",
-        "status: string (active|tobedeleted)",
-        "dateLastModified: string (ISO datetime)",
+        "sourcedId: string (UUID, required)",
+        "status: string (active|tobedeleted, required, default: active)",
+        "dateLastModified: string (ISO datetime with UTC timezone, required)",
         "metadata: object",
-        "userSourcedId: string",
-        "classSourcedId: string",
-        "role: string (student|teacher|aide|guardian|parent|relative)",
-        "primary: boolean",
+        "role: string (administrator|proctor|student|teacher, required)",
+        "primary: boolean (default: false)",
         "beginDate: string (ISO date)",
-        "endDate: string (ISO date, optional)"
+        "endDate: string (ISO date)",
+        "user: object (required, properties: sourcedId: string)",
+        "class: object (required, properties: sourcedId: string)"
       ]
     },
     {
       "name": "AcademicSession",
+      "description": "Represents an academic time period such as a term, semester, grading period, or school year. Academic sessions can be hierarchical (e.g. a semester within a school year) and are used to organize classes.",
+      "required": ["sourcedId", "status", "dateLastModified", "title", "type", "startDate", "endDate", "schoolYear", "org"],
       "fields": [
-        "sourcedId: string (UUID)",
-        "status: string (active|tobedeleted)",
-        "dateLastModified: string (ISO datetime)",
+        "sourcedId: string (UUID, required)",
+        "status: string (active|tobedeleted, required, default: active)",
+        "dateLastModified: string (ISO datetime with UTC timezone, required)",
         "metadata: object",
-        "title: string",
-        "type: string (term|semester|schoolYear|other)",
-        "startDate: string (ISO date)",
-        "endDate: string (ISO date)",
-        "parentSourcedId: string (optional)",
-        "schoolYear: string"
+        "title: string (required)",
+        "type: string (gradingPeriod|semester|schoolYear|term, required)",
+        "startDate: string (ISO date, required)",
+        "endDate: string (ISO date, required)",
+        "parent: object|null (reference to parent academic session)",
+        "schoolYear: string (required)",
+        "org: object (required)"
       ]
     },
     {
