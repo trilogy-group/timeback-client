@@ -81,6 +81,9 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ## Version History
 
+### v0.2.11
+
+
 ### v0.2.10
 - Fixed Google Sheets integration to use correct sheet name
 - Enhanced error handling for sheet operations

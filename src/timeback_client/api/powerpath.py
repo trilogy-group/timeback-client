@@ -61,17 +61,19 @@ class PowerPathAPI(TimeBackService):
             - seenQuestions: List of questions seen with their details
             - remainingQuestionsPerDifficulty: Count of remaining questions by difficulty
         """
-        data = {
+        # Create params dictionary to send as URL query parameters
+        params = {
             "student": student_id,
             "lesson": lesson_id
         }
+        
         if attempt:
-            data["attempt"] = attempt
+            params["attempt"] = attempt
             
         return self._make_request(
             endpoint="/getAssessmentProgress",
             method="GET",
-            data=data
+            params=params  # Send as URL query parameters
         )
         
     def get_next_question(
@@ -94,17 +96,22 @@ class PowerPathAPI(TimeBackService):
             - score: Current PowerPath100 score
             - question: Details of the next question
         """
-        data = {
+        # Create params dictionary to send as URL query parameters
+        params = {
             "student": student_id,
-            "lesson": lesson_id,
-            "ignoreAnsweredQuestions": ignore_answered_questions,
-            "ignoreDifficultyCheck": ignore_difficulty_check
+            "lesson": lesson_id
         }
+        
+        # Add optional parameters
+        if ignore_answered_questions:
+            params["ignoreAnsweredQuestions"] = "true"
+        if ignore_difficulty_check:
+            params["ignoreDifficultyCheck"] = "true"
         
         return self._make_request(
             endpoint="/getNextQuestion",
             method="GET",
-            data=data
+            params=params  # Send as URL query parameters
         )
         
     def reset_attempt(self, student_id: str, lesson_id: str) -> Dict[str, Any]:

@@ -386,8 +386,8 @@ class QTIService(TimeBackService):
     as defined in the QTI 3.0 specification.
     """
     
-    # Default QTI staging URL
-    DEFAULT_QTI_URL = "https://alpha-qti-api-43487de62e73.herokuapp.com/api"
+    # Default QTI staging URL - make sure it includes /api
+    DEFAULT_QTI_URL = "https://qti.alpha-1edtech.com/api"
     
     def __init__(self, base_url: str, qti_api_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
         """Initialize QTI service.
@@ -401,6 +401,13 @@ class QTIService(TimeBackService):
         # QTI service doesn't use the standard OneRoster base URL
         # Instead it has its own API endpoint
         self.qti_url = (qti_api_url or self.DEFAULT_QTI_URL).rstrip('/')
+        
+        # Ensure the qti_url has the /api prefix
+        if not self.qti_url.endswith('/api'):
+            if '/api' not in self.qti_url:
+                self.qti_url = f"{self.qti_url}/api"
+            
+        logger.info(f"Initializing QTI service with URL: {self.qti_url}")
         
         # We still call the parent constructor, but override the methods to use qti_url
         super().__init__(base_url, "qti", client_id, client_secret)
@@ -487,7 +494,7 @@ class TimeBackClient:
     # Update default URLs
     DEFAULT_STAGING_URL = "http://staging.alpha-1edtech.com/"
     DEFAULT_PRODUCTION_URL = "https://api.alpha-1edtech.com/"  # Updated to use api subdomain
-    DEFAULT_QTI_URL = "https://qti.alpha-1edtech.com"  # QTI only has production
+    DEFAULT_QTI_URL = "https://qti.alpha-1edtech.com/api"  # Include /api in the QTI URL
     
     def __init__(
         self, 

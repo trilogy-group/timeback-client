@@ -297,6 +297,83 @@
         "sourcedId: string (required)",
         "type: string (component, required)"
       ]
+    },
+    {
+      "name": "AssessmentTest",
+      "description": "A QTI 3.0 compliant assessment test containing one or more test parts, which organize questions into sections.",
+      "required": ["identifier", "title", "qti-test-part"],
+      "fields": [
+        "identifier: string (A unique code identifying the test, required)",
+        "title: string (The name of the test, required)",
+        "qtiVersion: string (Version of QTI standard, default: 3.0)",
+        "toolName: string (Name of the tool used to create the test)",
+        "toolVersion: string (Version of the tool used)",
+        "timeLimit: number (Maximum time allowed in minutes)",
+        "maxAttempts: number (Maximum number of attempts allowed)",
+        "toolsEnabled: object (List of tools available during the test)",
+        "metadata: object (Additional test information)",
+        "rawXml: string (Original QTI XML format)",
+        "content: object (Processed test content)",
+        "qti-test-part: array[TestPart] (Array of Test Parts, min: 1, required)",
+        "qti-outcome-declaration: array[OutcomeDeclaration] (Array of outcome declarations for scoring)",
+        "createdAt: string (ISO datetime)",
+        "updatedAt: string (ISO datetime)",
+        "isValidXml: boolean"
+      ]
+    },
+    {
+      "name": "TestPart",
+      "description": "Test Parts are major divisions within an Assessment Test that can contain multiple sections. Each Test Part must have navigation and submission settings.",
+      "required": ["identifier", "navigationMode", "submissionMode", "qti-assessment-section"],
+      "fields": [
+        "identifier: string (A unique code identifying the test part, required)",
+        "navigationMode: string (How questions can be accessed: linear|nonlinear, required)",
+        "submissionMode: string (How answers can be submitted: individual|simultaneous, required)",
+        "qti-assessment-section: array[Section] (Array of sections with their configurations, required, min: 1)",
+        "metadata: object (Additional test part information)"
+      ]
+    },
+    {
+      "name": "Section",
+      "description": "Sections are groups of questions within a test part. They help organize questions into logical groups.",
+      "required": ["identifier", "title", "visible"],
+      "fields": [
+        "identifier: string (A unique code identifying the section, required)",
+        "title: string (The name of the section, required)",
+        "visible: boolean (Whether the section is visible to the student, required)",
+        "required: boolean (Whether the section must be completed)",
+        "fixed: boolean (Whether the order of items is fixed)",
+        "sequence: number (Ordering number)",
+        "qti-assessment-item-ref: array[ItemRef] (References to assessment items)",
+        "metadata: object (Additional section information)",
+        "rawXml: string (Original QTI XML format)"
+      ]
+    },
+    {
+      "name": "ItemRef",
+      "description": "References to assessment items within a section.",
+      "required": ["identifier", "href"],
+      "fields": [
+        "identifier: string (A unique code identifying the item reference, required)",
+        "href: string (Reference to the assessment item, required)",
+        "required: boolean (Whether the item must be completed)",
+        "fixed: boolean (Whether the item position is fixed)",
+        "class: array[string] (Classification of the item)",
+        "category: array[string] (Categories the item belongs to)"
+      ]
+    },
+    {
+      "name": "OutcomeDeclaration",
+      "description": "Declarations for storing assessment results and scores.",
+      "required": ["identifier", "cardinality", "baseType"],
+      "fields": [
+        "identifier: string (A unique code identifying the outcome, required)",
+        "cardinality: string (single|multiple|ordered|record, required)",
+        "baseType: string (identifier|boolean|integer|float|string|duration|file|uri, required)",
+        "normalMaximum: number (Maximum normalized score)",
+        "normalMinimum: number (Minimum normalized score)",
+        "defaultValue: object (Default value for the outcome)"
+      ]
     }
   ]
 } 

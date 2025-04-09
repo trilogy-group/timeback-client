@@ -248,6 +248,53 @@ class ClassesAPI(TimeBackService):
             
         return self.list_classes(filter_expr=filter_expr)
     
+    def get_classes_for_student(
+        self,
+        student_id: str,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        sort: Optional[str] = None,
+        order_by: Optional[str] = None,
+        fields: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Get all classes for a specific student using the OneRoster v1.2 endpoint.
+        
+        Args:
+            student_id: The unique identifier of the student
+            limit: Maximum number of classes to return
+            offset: Number of classes to skip
+            sort: Field to sort by (e.g. 'title')
+            order_by: Sort order ('asc' or 'desc')
+            fields: Fields to return (e.g. ['sourcedId', 'title', 'course'])
+            
+        Returns:
+            Dictionary containing the student's classes
+            
+        Example:
+            api.get_classes_for_student(
+                student_id='student-123',
+                sort='title',
+                order_by='asc',
+                fields=['sourcedId', 'title', 'course', 'terms']
+            )
+        """
+        params = {}
+        if limit is not None:
+            params['limit'] = limit
+        if offset is not None:
+            params['offset'] = offset
+        if sort:
+            params['sort'] = sort
+        if order_by:
+            params['orderBy'] = order_by
+        if fields:
+            params['fields'] = ','.join(fields)
+            
+        return self._make_request(
+            endpoint=f"/students/{student_id}/classes",
+            params=params
+        )
+    
     def get_classes_for_teacher(self, teacher_id: str, status: str = "active") -> Dict[str, Any]:
         """Get all classes taught by a specific teacher.
         

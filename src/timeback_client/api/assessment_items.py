@@ -143,16 +143,37 @@ class AssessmentItemsAPI(TimeBackService):
         """Get an assessment item by identifier.
         
         Args:
-            identifier: The identifier of the assessment item to retrieve
+            identifier: The identifier of the assessment item to retrieve.
+                       This can be a full URL or just the item identifier.
             
         Returns:
             The assessment item data
             
         Raises:
-            requests.exceptions.HTTPError: If the API request fails
+            requests.exceptions.HTTPError: If the API request fails (404 if not found)
         """
-        endpoint = f"/assessment-items/{identifier}"
-        return self._make_request(endpoint)
+        # Handle the case where a full URL is provided
+        if identifier.startswith('http'):
+            # Extract the item ID from the URL
+            parts = identifier.split('/')
+            item_id = parts[-1]
+            logger.info(f"Extracted item ID {item_id} from URL {identifier}")
+            
+            # If the URL is from the same QTI API, use the local endpoint
+            if any(domain in identifier for domain in ['qti.alpha-1edtech.com', 'alpha-qti-api']):
+                endpoint = f"/assessment-items/{item_id}"
+                return self._make_request(endpoint)
+            else:
+                # If it's a different domain, make a direct HTTP request
+                logger.info(f"Making direct HTTP request to external URL: {identifier}")
+                headers = {"Accept": "application/json"}
+                response = requests.get(identifier, headers=headers)
+                response.raise_for_status()
+                return response.json()
+        else:
+            # Standard case - just the item ID
+            endpoint = f"/assessment-items/{identifier}"
+            return self._make_request(endpoint)
     
     def list_assessment_items(
         self,

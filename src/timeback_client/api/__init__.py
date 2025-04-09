@@ -7,6 +7,7 @@ in the OneRoster specification.
 __all__ = [
     "users",
     "assessment_items",  # QTI assessment items API
+    "assessment_tests",  # QTI assessment tests API
     "orgs",  # Organization management API
     "courses",  # Course management API
     "components",  # Course component management API (units, lessons, etc.)
