@@ -148,6 +148,21 @@ class AssessmentTestAPI(TimeBackService):
         endpoint = f"/assessment-tests/{identifier}"
         return self._make_request(endpoint)
     
+    def get_assessment_questions(self, identifier: str) -> Dict[str, Any]:
+        """Get questions for a specific assessment test.
+        
+        Args:
+            identifier: The identifier of the assessment test to retrieve questions for
+            
+        Returns:
+            Dictionary containing the assessment test questions
+            
+        Raises:
+            requests.exceptions.HTTPError: If the API request fails (404 if not found)
+        """
+        endpoint = f"/assessment-tests/{identifier}/questions"
+        return self._make_request(endpoint)
+    
     def list_assessment_tests(
         self,
         limit: Optional[int] = None,

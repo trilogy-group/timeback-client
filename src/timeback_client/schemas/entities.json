@@ -374,6 +374,32 @@
         "normalMinimum: number (Minimum normalized score)",
         "defaultValue: object (Default value for the outcome)"
       ]
+    },
+    {
+      "name": "Stimulus",
+      "description": "QTI 3.0 compliant stimulus content that can be referenced by assessment items. Contains HTML content and optional catalog information for additional guidance.",
+      "required": ["identifier", "title", "language", "content"],
+      "fields": [
+        "identifier: string (A unique code identifying the stimulus, required)",
+        "title: string (The name of the stimulus, required)",
+        "language: string (Language code e.g. 'en', required)",
+        "content: string (HTML content of the stimulus, required)",
+        "catalogInfo: array[CatalogEntry] (Additional guidance or annotations)",
+        "rawXml: string (Original QTI XML format)",
+        "createdAt: string (ISO datetime)",
+        "updatedAt: string (ISO datetime)",
+        "isValidXml: boolean"
+      ]
+    },
+    {
+      "name": "CatalogEntry",
+      "description": "Additional guidance or annotations for stimulus content",
+      "required": ["id", "support", "content"],
+      "fields": [
+        "id: string (Unique identifier for the catalog entry, required)",
+        "support: string (Type of support e.g. 'linguistic-guidance', required)",
+        "content: string (The guidance content, required)"
+      ]
     }
   ]
 } 

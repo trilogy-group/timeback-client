@@ -321,10 +321,6 @@ class GradebookService(TimeBackService):
     
     This service handles all grade and assessment-related operations
     as defined in the OneRoster 1.2 specification.
-    
-    Note:
-        This service is currently a placeholder and will be implemented
-        in a future version.
     """
     
     def __init__(self, base_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
@@ -336,6 +332,25 @@ class GradebookService(TimeBackService):
             client_secret: OAuth2 client secret for authentication
         """
         super().__init__(base_url, "gradebook", client_id, client_secret)
+        self._api_registry = {}
+        self._load_api_modules()
+        
+    def _load_api_modules(self):
+        """Load Gradebook API modules."""
+        try:
+            from ..api.assessment_results import AssessmentResultsAPI
+            # Register assessment results API
+            self._api_registry["assessment_results"] = AssessmentResultsAPI(self.base_url, self.client_id, self.client_secret)
+            logger.info("Registered AssessmentResultsAPI")
+        except ImportError as e:
+            logger.error(f"Could not import Gradebook API modules: {e}")
+            
+    def __getattr__(self, name):
+        """Access Gradebook API methods."""
+        if name in self._api_registry:
+            return self._api_registry[name]
+            
+        raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
 
 class ResourcesService(TimeBackService):
     """Client for TimeBack Resources API.
@@ -417,12 +432,17 @@ class QTIService(TimeBackService):
     def _load_api_modules(self):
         """Dynamically load all API modules for QTI."""
         try:
-            # Import the assessment_items API module
+            # Import all QTI API modules
             from ..api.assessment_items import AssessmentItemsAPI
+            from ..api.qti_stimulus import StimulusAPI
+            from ..api.assessment_tests import AssessmentTestAPI
             
             # Register API classes with QTI URL
             self._api_registry["assessment_items"] = AssessmentItemsAPI(self.qti_url, self.client_id, self.client_secret)
-            logger.info("Registered AssessmentItemsAPI with QTI URL: %s", self.qti_url)
+            self._api_registry["stimuli"] = StimulusAPI(self.qti_url, self.client_id, self.client_secret)
+            self._api_registry["assessment_tests"] = AssessmentTestAPI(self.qti_url, self.client_id, self.client_secret)
+            
+            logger.info("Registered QTI APIs with QTI URL: %s", self.qti_url)
         except ImportError as e:
             logger.error(f"Could not import QTI API modules: {e}")
     

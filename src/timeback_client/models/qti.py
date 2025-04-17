@@ -7,6 +7,7 @@ assessment items and tests based on the QTI 3.0 specification.
 from enum import Enum
 from typing import List, Dict, Any, Optional, Union
 from pydantic import BaseModel, Field, field_serializer
+from datetime import datetime
 
 class QTIInteractionType(str, Enum):
     """QTI Interaction Types per QTI 3.0 specification."""
@@ -124,9 +125,58 @@ class QTIResponseProcessing(BaseModel):
     incorrectResponseIdentifier: Optional[str] = None
     inlineFeedback: Optional[QTIInlineFeedback] = None
 
+class CatalogEntry(BaseModel):
+    """Additional guidance or annotations for stimulus content."""
+    id: str = Field(..., description="Unique identifier for the catalog entry")
+    support: str = Field(..., description="Type of support provided by this entry")
+    content: str = Field(..., description="The actual guidance or annotation content")
+
 class QTIStimulus(BaseModel):
-    """Reference to a shared stimulus."""
-    identifier: str
+    """QTI 3.0 compliant stimulus that can be referenced by assessment items."""
+    
+    identifier: str = Field(
+        ..., 
+        description="Unique identifier for the stimulus"
+    )
+    title: str = Field(
+        ..., 
+        description="Title or name of the stimulus"
+    )
+    language: str = Field(
+        ..., 
+        description="Language code for the stimulus content"
+    )
+    content: str = Field(
+        ..., 
+        description="The actual stimulus content in QTI-compliant format"
+    )
+    catalog_info: Optional[List[CatalogEntry]] = Field(
+        None,
+        description="Additional guidance or annotations for this stimulus"
+    )
+    raw_xml: Optional[str] = Field(
+        None,
+        description="Raw XML representation of the stimulus"
+    )
+    created_at: Optional[datetime] = Field(
+        None,
+        description="Timestamp when the stimulus was created"
+    )
+    updated_at: Optional[datetime] = Field(
+        None,
+        description="Timestamp when the stimulus was last updated"
+    )
+    is_valid_xml: Optional[bool] = Field(
+        None,
+        description="Whether the stimulus XML is valid according to QTI schema"
+    )
+    
+    class Config:
+        """Pydantic model configuration."""
+        allow_population_by_field_name = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
 
 class QTIItemBody(BaseModel):
     """QTI Item Body containing elements."""

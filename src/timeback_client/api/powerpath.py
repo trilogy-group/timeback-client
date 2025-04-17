@@ -42,6 +42,42 @@ class PowerPathAPI(TimeBackService):
             endpoint=f"/syllabus/{course_id}"
         )
         
+    def get_student_course_progress(self, course_id: str, student_id: str) -> Dict[str, Any]:
+        """Get a student's progress in a specific course.
+        
+        Args:
+            course_id: The unique identifier of the course
+            student_id: The unique identifier of the student
+            
+        Returns:
+            Dict containing the student's progress data for all components in the course
+            
+        Raises:
+            requests.exceptions.HTTPError: If course/student not found (404) or other API error
+            
+        Example response:
+        {
+            "components": [
+                {
+                    "id": "component-1",
+                    "progress": 75,
+                    "status": "in_progress",
+                    "results": [
+                        {
+                            "id": "result-1",
+                            "score": 0.8,
+                            "completed": true
+                        }
+                    ]
+                }
+            ]
+        }
+        """
+        logger.info(f"Fetching course progress for student {student_id} in course {course_id}")
+        return self._make_request(
+            endpoint=f"/lessonPlans/getCourseProgress/{course_id}/student/{student_id}"
+        )
+        
     def get_assessment_progress(
         self,
         student_id: str,
@@ -171,5 +207,64 @@ class PowerPathAPI(TimeBackService):
         return self._make_request(
             endpoint="/updateStudentQuestionResponse",
             method="PUT",
+            data=data
+        )
+        
+    def update_student_item_response(
+        self,
+        student_id: str,
+        result: Dict[str, Any],
+        component_id: Optional[str] = None,
+        component_resource_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Update a student's response to a specific item in a course component.
+        
+        Args:
+            student_id: The unique identifier of the student
+            result: Dict containing the result data with the following structure:
+                - status: Status of the result (e.g., "active")
+                - metadata: Additional metadata (optional)
+                - score: Numeric score (optional)
+                - textScore: Text representation of score (optional)
+                - scoreDate: Date when score was recorded
+                - scorePercentile: Percentile score (optional)
+                - scoreStatus: Status of the score (e.g., "exempt", "completed")
+                - comment: Optional comment
+                - learningObjectiveSet: List of learning objectives with scores
+                - inProgress: Whether item is in progress (optional)
+                - incomplete: Whether item is incomplete (optional)
+                - late: Whether item is late (optional)
+                - missing: Whether item is missing (optional)
+            component_id: The unique identifier of the course component (mutually exclusive with component_resource_id)
+            component_resource_id: The unique identifier of the component resource (mutually exclusive with component_id)
+            
+        Returns:
+            Dict containing the response from the API
+            
+        Raises:
+            requests.exceptions.HTTPError: If student/component not found (404) or other API error
+            ValueError: If neither or both component_id and component_resource_id are provided
+        """
+        if not component_id and not component_resource_id:
+            raise ValueError("Either component_id or component_resource_id must be provided")
+            
+        if component_id and component_resource_id:
+            raise ValueError("Cannot provide both component_id and component_resource_id")
+            
+        logger.info(f"Updating item response for student {student_id}")
+        if component_id:
+            logger.info(f"Using component_id: {component_id}")
+        else:
+            logger.info(f"Using component_resource_id: {component_resource_id}")
+        
+        data = {
+            "studentId": student_id,
+            **({"componentId": component_id} if component_id else {"componentResourceId": component_resource_id}),
+            "result": result
+        }
+        
+        return self._make_request(
+            endpoint="/lessonPlans/updateStudentItemResponse",
+            method="POST",
             data=data
         ) 
