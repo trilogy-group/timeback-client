@@ -179,23 +179,19 @@ class AssessmentItemsAPI(TimeBackService):
         self,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-        search: Optional[str] = None
+        search: Optional[str] = None,
+        filter_expr: Optional[str] = None
     ) -> Dict[str, Any]:
-        """List assessment items with pagination and search.
-        
+        """List assessment items with pagination, search, and optional filtering.
         Args:
             limit: Maximum number of items to return
             offset: Number of items to skip
             search: Search query to filter items by title or identifier
-            
+            filter_expr: Optional filter expression (passed as 'filter' query param)
         Returns:
             Dictionary containing a list of assessment items and pagination info
-            
-        Raises:
-            requests.exceptions.HTTPError: If the API request fails
         """
         endpoint = "/assessment-items"
-        
         params = {}
         if limit is not None:
             params["limit"] = limit
@@ -203,7 +199,8 @@ class AssessmentItemsAPI(TimeBackService):
             params["offset"] = offset
         if search is not None:
             params["search"] = search
-        
+        if filter_expr is not None:
+            params["filter"] = filter_expr
         return self._make_request(endpoint, params=params)
     
     def update_assessment_item(

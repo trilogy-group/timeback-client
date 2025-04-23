@@ -193,7 +193,17 @@ class ComponentsAPI(TimeBackService):
             method="DELETE"
         )
     
-    def list_components(self, limit=None, offset=None, sort=None, order_by=None, fields=None, parent_id=None, course_id=None):
+    def list_components(
+        self,
+        limit=None,
+        offset=None,
+        sort=None,
+        order_by=None,
+        fields=None,
+        parent_id=None,
+        course_id=None,
+        filter_expr=None
+    ):
         """List course components with optional filtering and pagination.
 
         Args:
@@ -204,6 +214,7 @@ class ComponentsAPI(TimeBackService):
             fields (list, optional): List of fields to include in response
             parent_id (str, optional): Filter by parent component ID
             course_id (str, optional): Filter by course ID
+            filter_expr (str, optional): Additional filter expression (passed as 'filter' query param)
 
         Returns:
             dict: Response containing list of components
@@ -218,19 +229,17 @@ class ComponentsAPI(TimeBackService):
         if order_by is not None:
             params['orderBy'] = order_by
         if fields is not None:
-            # Convert list of fields to comma-separated string
             params['fields'] = ','.join(fields)
-        
         # Build filter expression
         filters = []
         if parent_id is not None:
             filters.append(f"parent='{parent_id}'")
         if course_id is not None:
             filters.append(f"course.sourcedId='{course_id}'")
-            
+        if filter_expr is not None:
+            filters.append(filter_expr)
         if filters:
             params['filter'] = ' AND '.join(filters)
-
         return self._make_request("/courses/components", params=params)
     
     def get_resources_for_component(

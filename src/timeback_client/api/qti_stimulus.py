@@ -157,24 +157,20 @@ class StimulusAPI(TimeBackService):
         limit: Optional[int] = None,
         offset: Optional[int] = None,
         search: Optional[str] = None,
-        language: Optional[str] = None
+        language: Optional[str] = None,
+        filter_expr: Optional[str] = None
     ) -> Dict[str, Any]:
-        """List stimuli with pagination, search, and language filtering.
-        
+        """List stimuli with pagination, search, language, and optional filtering.
         Args:
             limit: Maximum number of items to return
             offset: Number of items to skip
             search: Search query to filter items by title or identifier
             language: Filter by language code (e.g. 'en')
-            
+            filter_expr: Optional filter expression (passed as 'filter' query param)
         Returns:
             Dictionary containing a list of stimuli and pagination info
-            
-        Raises:
-            requests.exceptions.HTTPError: If the API request fails
         """
         endpoint = "/stimuli"
-        
         params = {}
         if limit is not None:
             params["limit"] = limit
@@ -184,7 +180,8 @@ class StimulusAPI(TimeBackService):
             params["search"] = search
         if language is not None:
             params["language"] = language
-        
+        if filter_expr is not None:
+            params["filter"] = filter_expr
         return self._make_request(endpoint, params=params)
     
     def update_stimulus(

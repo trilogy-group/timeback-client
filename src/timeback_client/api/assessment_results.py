@@ -31,7 +31,8 @@ class AssessmentResultsAPI(TimeBackService):
         student_id: Optional[str] = None,
         component_id: Optional[str] = None,
         limit: Optional[int] = None,
-        offset: Optional[int] = None
+        offset: Optional[int] = None,
+        filter_expr: Optional[str] = None
     ) -> Dict[str, Any]:
         """Get assessment results with optional filtering.
         
@@ -40,6 +41,7 @@ class AssessmentResultsAPI(TimeBackService):
             component_id: Filter results by component ID
             limit: Maximum number of results to return
             offset: Number of results to skip for pagination
+            filter_expr: Optional filter expression (e.g. "status='active'")
             
         Returns:
             Dictionary containing assessment results data
@@ -59,6 +61,8 @@ class AssessmentResultsAPI(TimeBackService):
             params["limit"] = limit
         if offset is not None:
             params["offset"] = offset
+        if filter_expr is not None:
+            params["filter"] = filter_expr
             
         return self._make_request(endpoint, params=params)
     

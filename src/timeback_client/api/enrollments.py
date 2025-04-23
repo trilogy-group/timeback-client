@@ -218,37 +218,66 @@ class EnrollmentsAPI(TimeBackService):
             
         return self._make_request("/enrollments", params=params)
     
-    def get_enrollments_for_student(self, student_id: str, status: str = "active") -> Dict[str, Any]:
-        """Get all enrollments for a specific student.
-        
+    def get_enrollments_for_student(
+        self,
+        student_id: str,
+        filter_expr: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        sort: Optional[str] = None,
+        order_by: Optional[str] = None,
+        fields: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Get all enrollments for a specific student, with optional filtering.
         Args:
             student_id: The unique identifier of the student
-            status: Filter by enrollment status (default: 'active')
-            
+            filter_expr: Optional filter expression (e.g. "status='active'")
+            limit, offset, sort, order_by, fields: Standard listing params
         Returns:
             Dictionary containing the student's enrollments
         """
-        filter_expr = f"user.sourcedId='{student_id}'"
-        if status:
-            filter_expr += f" AND status='{status}'"
-            
-        return self.list_enrollments(filter_expr=filter_expr)
-    
-    def get_enrollments_for_class(self, class_id: str, role: Optional[str] = None, status: str = "active") -> Dict[str, Any]:
-        """Get all enrollments for a specific class.
-        
+        # Always filter by user.sourcedId
+        base_filter = f"user.sourcedId='{student_id}'"
+        combined_filter = base_filter
+        if filter_expr:
+            combined_filter = f"{base_filter} AND {filter_expr}"
+        return self.list_enrollments(
+            filter_expr=combined_filter,
+            limit=limit,
+            offset=offset,
+            sort=sort,
+            order_by=order_by,
+            fields=fields
+        )
+
+    def get_enrollments_for_class(
+        self,
+        class_id: str,
+        filter_expr: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        sort: Optional[str] = None,
+        order_by: Optional[str] = None,
+        fields: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Get all enrollments for a specific class, with optional filtering.
         Args:
             class_id: The unique identifier of the class
-            role: Optional role to filter by (e.g. 'student', 'teacher')
-            status: Filter by enrollment status (default: 'active')
-            
+            filter_expr: Optional filter expression (e.g. "status='active' AND role='student'")
+            limit, offset, sort, order_by, fields: Standard listing params
         Returns:
             Dictionary containing the class's enrollments
         """
-        filter_expr = f"class.sourcedId='{class_id}'"
-        if role:
-            filter_expr += f" AND role='{role}'"
-        if status:
-            filter_expr += f" AND status='{status}'"
-            
-        return self.list_enrollments(filter_expr=filter_expr) 
+        # Always filter by class.sourcedId
+        base_filter = f"class.sourcedId='{class_id}'"
+        combined_filter = base_filter
+        if filter_expr:
+            combined_filter = f"{base_filter} AND {filter_expr}"
+        return self.list_enrollments(
+            filter_expr=combined_filter,
+            limit=limit,
+            offset=offset,
+            sort=sort,
+            order_by=order_by,
+            fields=fields
+        ) 

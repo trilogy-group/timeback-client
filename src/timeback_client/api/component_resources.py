@@ -181,7 +181,8 @@ class ComponentResourcesAPI(TimeBackService):
         order_by: Optional[str] = None,
         fields: Optional[List[str]] = None,
         component_id: Optional[str] = None,
-        resource_id: Optional[str] = None
+        resource_id: Optional[str] = None,
+        filter_expr: Optional[str] = None
     ) -> Dict[str, Any]:
         """List component resources with optional filtering and pagination.
 
@@ -193,6 +194,7 @@ class ComponentResourcesAPI(TimeBackService):
             fields: List of fields to include in response
             component_id: Filter by parent component ID
             resource_id: Filter by resource ID
+            filter_expr: Optional filter expression (passed as 'filter' query param)
 
         Returns:
             dict: Response containing list of component resources
@@ -208,15 +210,14 @@ class ComponentResourcesAPI(TimeBackService):
             params['orderBy'] = order_by
         if fields is not None:
             params['fields'] = ','.join(fields)
-        
         # Build filter expression
         filters = []
         if component_id is not None:
             filters.append(f"courseComponent.sourcedId='{component_id}'")
         if resource_id is not None:
             filters.append(f"resource.sourcedId='{resource_id}'")
-            
+        if filter_expr is not None:
+            filters.append(filter_expr)
         if filters:
             params['filter'] = ' AND '.join(filters)
-
         return self._make_request("/courses/component-resources", params=params) 

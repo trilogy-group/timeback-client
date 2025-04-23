@@ -229,54 +229,23 @@ class ClassesAPI(TimeBackService):
             
         return self._make_request("/classes", params=params)
     
-    def get_classes_for_course(self, course_id: str, term_id: Optional[str] = None, status: str = "active") -> Dict[str, Any]:
-        """Get all classes for a specific course.
-        
-        Args:
-            course_id: The unique identifier of the course
-            term_id: Optional term ID to filter classes by
-            status: Filter by class status (default: 'active')
-            
-        Returns:
-            Dictionary containing the course's classes
-        """
-        filter_expr = f"course.sourcedId='{course_id}'"
-        if term_id:
-            filter_expr += f" AND terms.sourcedId='{term_id}'"
-        if status:
-            filter_expr += f" AND status='{status}'"
-            
-        return self.list_classes(filter_expr=filter_expr)
-    
-    def get_classes_for_student(
+    def get_classes_for_course(
         self,
-        student_id: str,
+        course_id: str,
+        filter_expr: Optional[str] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
         sort: Optional[str] = None,
         order_by: Optional[str] = None,
         fields: Optional[List[str]] = None
     ) -> Dict[str, Any]:
-        """Get all classes for a specific student using the OneRoster v1.2 endpoint.
-        
+        """Get all classes for a specific course, with optional filtering.
         Args:
-            student_id: The unique identifier of the student
-            limit: Maximum number of classes to return
-            offset: Number of classes to skip
-            sort: Field to sort by (e.g. 'title')
-            order_by: Sort order ('asc' or 'desc')
-            fields: Fields to return (e.g. ['sourcedId', 'title', 'course'])
-            
+            course_id: The unique identifier of the course
+            filter_expr: Optional filter expression (e.g. "status='active'")
+            limit, offset, sort, order_by, fields: Standard listing params
         Returns:
-            Dictionary containing the student's classes
-            
-        Example:
-            api.get_classes_for_student(
-                student_id='student-123',
-                sort='title',
-                order_by='asc',
-                fields=['sourcedId', 'title', 'course', 'terms']
-            )
+            Dictionary containing the course's classes
         """
         params = {}
         if limit is not None:
@@ -287,44 +256,89 @@ class ClassesAPI(TimeBackService):
             params['sort'] = sort
         if order_by:
             params['orderBy'] = order_by
+        if filter_expr:
+            params['filter'] = filter_expr
         if fields:
             params['fields'] = ','.join(fields)
-            
+        # Always filter by course.sourcedId
+        course_filter = f"course.sourcedId='{course_id}'"
+        if filter_expr:
+            params['filter'] = f"{course_filter} AND {filter_expr}"
+        else:
+            params['filter'] = course_filter
+        return self._make_request(f"/courses/{course_id}/classes", params=params)
+    
+    def get_classes_for_student(
+        self,
+        student_id: str,
+        filter_expr: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        sort: Optional[str] = None,
+        order_by: Optional[str] = None,
+        fields: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Get all classes for a specific student using the OneRoster v1.2 endpoint, with optional filtering.
+        Args:
+            student_id: The unique identifier of the student
+            filter_expr: Optional filter expression (e.g. "status='active'")
+            limit, offset, sort, order_by, fields: Standard listing params
+        Returns:
+            Dictionary containing the student's classes
+        """
+        params = {}
+        if limit is not None:
+            params['limit'] = limit
+        if offset is not None:
+            params['offset'] = offset
+        if sort:
+            params['sort'] = sort
+        if order_by:
+            params['orderBy'] = order_by
+        if filter_expr:
+            params['filter'] = filter_expr
+        if fields:
+            params['fields'] = ','.join(fields)
         return self._make_request(
             endpoint=f"/students/{student_id}/classes",
             params=params
         )
     
-    def get_classes_for_teacher(self, teacher_id: str, status: str = "active") -> Dict[str, Any]:
-        """Get all classes taught by a specific teacher.
-        
-        This method uses the enrollments endpoint to find classes
-        where the teacher is enrolled with a 'teacher' role.
-        
+    def get_classes_for_teacher(
+        self,
+        teacher_id: str,
+        filter_expr: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        sort: Optional[str] = None,
+        order_by: Optional[str] = None,
+        fields: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Get all classes taught by a specific teacher, with optional filtering.
         Args:
             teacher_id: The unique identifier of the teacher
-            status: Filter by class status (default: 'active')
-            
+            filter_expr: Optional filter expression (e.g. "status='active'")
+            limit, offset, sort, order_by, fields: Standard listing params
         Returns:
             Dictionary containing the teacher's classes
         """
         # First get teacher's enrollments
-        filter_expr = f"user.sourcedId='{teacher_id}' AND role='teacher'"
-        if status:
-            filter_expr += f" AND status='{status}'"
-            
-        enrollments = self._make_request("/enrollments", params={"filter": filter_expr})
-        
+        enroll_filter = f"user.sourcedId='{teacher_id}' AND role='teacher'"
+        enrollments = self._make_request("/enrollments", params={"filter": enroll_filter})
         # Extract class IDs from enrollments
-        class_ids = []
-        for enrollment in enrollments.get('enrollments', []):
-            if 'class' in enrollment and 'sourcedId' in enrollment['class']:
-                class_ids.append(enrollment['class']['sourcedId'])
-                
+        class_ids = [enrollment['class']['sourcedId'] for enrollment in enrollments.get('enrollments', []) if 'class' in enrollment and 'sourcedId' in enrollment['class']]
         if not class_ids:
-            # Return empty result if no classes found
             return {'classes': []}
-            
-        # Now get class details
+        # Build filter for classes
         class_id_filter = " OR ".join([f"sourcedId='{class_id}'" for class_id in class_ids])
-        return self.list_classes(filter_expr=class_id_filter) 
+        combined_filter = class_id_filter
+        if filter_expr:
+            combined_filter = f"({class_id_filter}) AND {filter_expr}"
+        return self.list_classes(
+            filter_expr=combined_filter,
+            limit=limit,
+            offset=offset,
+            sort=sort,
+            order_by=order_by,
+            fields=fields
+        ) 

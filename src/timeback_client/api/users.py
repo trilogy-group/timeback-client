@@ -91,29 +91,21 @@ class UsersAPI(TimeBackService):
         sort: Optional[str] = None,
         order_by: Optional[str] = None,
         filter_expr: Optional[str] = None,
+        filter: Optional[str] = None,
         fields: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """List users with filtering and pagination.
-        
+        Always filters for status='active' unless another status is provided.
         Args:
             limit: Maximum number of users to return
             offset: Number of users to skip
             sort: Field to sort by (e.g. 'familyName')
             order_by: Sort order ('asc' or 'desc')
             filter_expr: Filter expression (e.g. "role='student'")
+            filter: Alias for filter_expr for compatibility
             fields: Fields to return (e.g. ['sourcedId', 'givenName'])
-            
         Returns:
             Dictionary containing users and pagination information
-            
-        Example:
-            # Get all active students
-            api.list_users(
-                filter_expr="role='student' AND status='active'",
-                sort='familyName',
-                order_by='asc',
-                fields=['sourcedId', 'givenName', 'familyName', 'email']
-            )
         """
         params = {}
         if limit is not None:
@@ -124,11 +116,15 @@ class UsersAPI(TimeBackService):
             params['sort'] = sort
         if order_by:
             params['orderBy'] = order_by
-        if filter_expr:
-            params['filter'] = filter_expr
+        filter_value = filter_expr or filter
+        if filter_value:
+            if "status=" not in filter_value:
+                filter_value = f"{filter_value} AND status='active'"
+        else:
+            filter_value = "status='active'"
+        params['filter'] = filter_value
         if fields:
             params['fields'] = ','.join(fields)
-            
         return self._make_request("/users", params=params)
     
     def update_user(self, user_id: str, user: Union[User, Dict[str, Any]]) -> Dict[str, Any]:
