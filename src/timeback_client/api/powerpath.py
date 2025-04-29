@@ -267,4 +267,29 @@ class PowerPathAPI(TimeBackService):
             endpoint="/lessonPlans/updateStudentItemResponse",
             method="POST",
             data=data
+        )
+        
+    def post_final_student_assessment_response(
+        self,
+        lesson_id: str,
+        student_id: str
+    ) -> Dict[str, Any]:
+        """Post the final student assessment response for a lesson.
+        
+        Args:
+            lesson_id: The unique identifier of the lesson
+            student_id: The unique identifier of the student
+        
+        Returns:
+            Dict containing the response from the API
+        """
+        logger.info(f"Posting final student assessment response for student {student_id} and lesson {lesson_id}")
+        data = {
+            "lesson": lesson_id,
+            "student": student_id
+        }
+        return self._make_request(
+            endpoint="/finalStudentAssessmentResponse",
+            method="POST",
+            data=data
         ) 

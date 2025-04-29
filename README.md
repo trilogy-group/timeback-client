@@ -15,6 +15,8 @@ The TimeBack client is organized into three main services following the OneRoste
 - Rostering Service (`/ims/oneroster/rostering/v1p2`) - User and organization management
 - Gradebook Service (`/ims/oneroster/gradebook/v1p2`) - Grades and assessments
 - Resources Service (`/ims/oneroster/resources/v1p2`) - Learning resources
+- QTI Service (`/api`) - Assessment content operations (QTI 3.0)
+- PowerPath Service - Course syllabus and pathway operations
 
 Each service provides access to specialized API classes for different entity types.
 
@@ -23,12 +25,18 @@ Each service provides access to specialized API classes for different entity typ
 ```python
 from timeback_client import TimeBackClient
 
-# Initialize the client (uses default staging URL)
+# Initialize the client (uses default production URL)
 client = TimeBackClient()
 
 # Use the users API through the rostering service
 users = client.rostering.users.list_users(limit=10)
 user = client.rostering.users.get_user("user-id")
+
+# Use the QTI service
+qti_items = client.qti.assessment_items.list_assessment_items()
+
+# Use the PowerPath service
+syllabus = client.powerpath.get_course_syllabus("course-id")
 
 # Use the gradebook service (coming soon)
 # grades = client.gradebook.grades.list_grades()
@@ -159,6 +167,30 @@ resources = client.resources
 # Methods coming soon
 ```
 
+#### QTI Service
+
+The QTI service provides access to assessment content APIs (QTI 3.0):
+
+```python
+# Get the QTI service
+qti = client.qti
+
+# List assessment items
+items = qti.assessment_items.list_assessment_items()
+```
+
+#### PowerPath Service
+
+The PowerPath service provides access to course syllabus and pathway APIs:
+
+```python
+# Get the PowerPath service
+powerpath = client.powerpath
+
+# Get course syllabus
+syllabus = powerpath.get_course_syllabus("course-id")
+```
+
 ## API Structure
 
 The client follows the OneRoster 1.2 API structure:
@@ -190,7 +222,11 @@ TimeBackClient
 │   └── ... other entity APIs
 ├── gradebook (GradebookService)
 │   └── ... entity APIs coming soon
-└── resources (ResourcesService)
+├── resources (ResourcesService)
+│   └── ... entity APIs coming soon
+├── qti (QTIService)
+│   └── assessment_items (AssessmentItemsAPI)
+└── powerpath (PowerPathService)
     └── ... entity APIs coming soon
 ```
 
@@ -254,23 +290,23 @@ For release procedures and versioning guidelines, see [RELEASE.md](RELEASE.md).
 
 ## Environment Configuration
 
-The TimeBack client supports both staging and production environments. You can specify the environment when initializing the client:
+The TimeBack client always uses the production API URL by default. The `environment` parameter is kept for backward compatibility but is ignored. You can specify custom URLs if needed:
 
 ```python
 from timeback_client import TimeBackClient
 
-# For staging (default)
+# Default (production)
 client = TimeBackClient(
-    environment="staging",
-    client_id="your-staging-client-id",
-    client_secret="your-staging-client-secret"
-)
-
-# For production
-client = TimeBackClient(
-    environment="production",
     client_id="your-production-client-id",
     client_secret="your-production-client-secret"
+)
+
+# Custom API URLs (advanced usage)
+client = TimeBackClient(
+    api_url="http://staging.alpha-1edtech.com/",
+    qti_api_url="https://qti.alpha-1edtech.com/api",
+    client_id="your-client-id",
+    client_secret="your-client-secret"
 )
 ```
 
