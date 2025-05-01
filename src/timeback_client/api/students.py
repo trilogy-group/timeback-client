@@ -35,14 +35,14 @@ class StudentsAPI(TimeBackService):
         sort: Optional[str] = None,
         order_by: Optional[str] = None,
         filter_expr: Optional[str] = None,
-        fields: Optional[List[str]] = None
+        fields: Optional[List[str]] = None,
+        **extra_params
     ) -> Dict[str, Any]:
         """List students using the OneRoster v1.2 students endpoint.
-        
+        Supports arbitrary extra query params (e.g. search='Amanda').
         This method uses the dedicated students endpoint which automatically filters
         for users with the student role. It supports all standard OneRoster filtering
         and sorting capabilities including dot notation for nested fields.
-        
         Args:
             limit: Maximum number of students to return
             offset: Number of students to skip
@@ -50,23 +50,9 @@ class StudentsAPI(TimeBackService):
             order_by: Sort order ('asc' or 'desc')
             filter_expr: Filter expression (e.g. "status='active'")
             fields: Fields to return (e.g. ['sourcedId', 'givenName'])
-            
+            **extra_params: Any additional query params (e.g. search='Amanda')
         Returns:
             Dictionary containing students and pagination information
-            
-        Example:
-            # Get all active students sorted by grade
-            api.list_students(
-                filter_expr="status='active'",
-                sort='metadata.grade',
-                order_by='asc',
-                fields=['sourcedId', 'givenName', 'familyName', 'email']
-            )
-            
-            # Filter by metadata field
-            api.list_students(
-                filter_expr="metadata.emergencyContact='true'"
-            )
         """
         params = {}
         if limit is not None:
@@ -81,7 +67,8 @@ class StudentsAPI(TimeBackService):
             params['filter'] = filter_expr
         if fields:
             params['fields'] = ','.join(fields)
-            
+        # Merge in any extra query params (e.g. search)
+        params.update(extra_params)
         return self._make_request("/students", params=params)
     
     def get_student(self, student_id: str, fields: Optional[List[str]] = None) -> Dict[str, Any]:

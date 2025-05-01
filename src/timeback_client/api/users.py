@@ -92,10 +92,12 @@ class UsersAPI(TimeBackService):
         order_by: Optional[str] = None,
         filter_expr: Optional[str] = None,
         filter: Optional[str] = None,
-        fields: Optional[List[str]] = None
+        fields: Optional[List[str]] = None,
+        **extra_params
     ) -> Dict[str, Any]:
         """List users with filtering and pagination.
         Always filters for status='active' unless another status is provided.
+        Supports arbitrary extra query params (e.g. search='Amanda').
         Args:
             limit: Maximum number of users to return
             offset: Number of users to skip
@@ -104,6 +106,7 @@ class UsersAPI(TimeBackService):
             filter_expr: Filter expression (e.g. "role='student'")
             filter: Alias for filter_expr for compatibility
             fields: Fields to return (e.g. ['sourcedId', 'givenName'])
+            **extra_params: Any additional query params (e.g. search='Amanda')
         Returns:
             Dictionary containing users and pagination information
         """
@@ -125,6 +128,8 @@ class UsersAPI(TimeBackService):
         params['filter'] = filter_value
         if fields:
             params['fields'] = ','.join(fields)
+        # Merge in any extra query params (e.g. search)
+        params.update(extra_params)
         return self._make_request("/users", params=params)
     
     def update_user(self, user_id: str, user: Union[User, Dict[str, Any]]) -> Dict[str, Any]:
