@@ -26,18 +26,27 @@ class PowerPathAPI(TimeBackService):
         # Override the api_path since PowerPath doesn't use OneRoster path
         self.api_path = "/powerpath"
         
-    def get_course_syllabus(self, course_id: str) -> Dict[str, Any]:
-        """Get the syllabus for a specific course.
+    def get_course_syllabus(self, course_id: str, filters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Get the syllabus for a specific course, with optional filtering.
         
         Args:
             course_id: The unique identifier of the course
-            
+            filters: Optional dict of filter parameters to pass as query params
+        
         Returns:
             Dict containing the course syllabus content
-            
+        
         Raises:
             requests.exceptions.HTTPError: If course not found (404) or other API error
         """
+        # If filters are provided, pass them as query params
+        if filters:
+            return self._make_request(
+                endpoint=f"/syllabus/{course_id}",
+                method="GET",
+                params=filters
+            )
+        # Default: no filters
         return self._make_request(
             endpoint=f"/syllabus/{course_id}"
         )
@@ -290,6 +299,29 @@ class PowerPathAPI(TimeBackService):
         }
         return self._make_request(
             endpoint="/finalStudentAssessmentResponse",
+            method="POST",
+            data=data
+        )
+        
+    def create_new_attempt(self, student_id: str, lesson_id: str) -> Dict[str, Any]:
+        """Create a new attempt for a PowerPath100 lesson.
+        
+        Args:
+            student_id: The sourcedId of the student
+            lesson_id: The sourcedId of the PowerPath100 lesson
+        
+        Returns:
+            Dict containing the response from the API
+        
+        FIXME: Confirm the correct endpoint with PowerPath API docs. This is a placeholder.
+        """
+        data = {
+            "student": student_id,
+            "lesson": lesson_id
+        }
+        # FIXME: Replace '/createNewAttempt' with the actual endpoint if different
+        return self._make_request(
+            endpoint="/createNewAttempt",
             method="POST",
             data=data
         ) 
