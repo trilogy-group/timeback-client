@@ -216,9 +216,11 @@ class CoursesAPI(TimeBackService):
         sort: Optional[str] = None,
         order_by: Optional[str] = None,
         filter_expr: Optional[str] = None,
-        fields: Optional[List[str]] = None
+        fields: Optional[List[str]] = None,
+        **extra_params
     ) -> Dict[str, Any]:
         """List courses with filtering and pagination.
+        Supports arbitrary extra query params (e.g. search='Math').
         
         Args:
             limit: Maximum number of courses to return
@@ -227,6 +229,7 @@ class CoursesAPI(TimeBackService):
             order_by: Sort order ('asc' or 'desc')
             filter_expr: Filter expression (e.g. "title='Math 101'")
             fields: Fields to return (e.g. ['sourcedId', 'title', 'courseCode'])
+            **extra_params: Any additional query params (e.g. search='Math')
             
         Returns:
             Dictionary containing courses and pagination information
@@ -253,6 +256,9 @@ class CoursesAPI(TimeBackService):
             params['filter'] = filter_expr
         if fields:
             params['fields'] = ','.join(fields)
+        
+        # Merge in any extra query params (e.g. search)
+        params.update(extra_params)
             
         return self._make_request("/courses", params=params)
     

@@ -54,9 +54,9 @@ class AgentRef(Reference):
 
     @field_validator('type')
     def validate_type(cls, v):
-        """Validate agent type is either student or user."""
-        if v not in ['student', 'user']:
-            raise ValueError('Agent type must be either student or user')
+        """Validate agent type includes student, user, or parent."""
+        if v not in ['student', 'user', 'parent']:
+            raise ValueError('Agent type must be student, user, or parent')
         return v
 
 class UserId(BaseModel):
