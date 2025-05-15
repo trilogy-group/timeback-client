@@ -1,6 +1,6 @@
 [project]
 name = "timeback-client"
-version = "0.2.14"
+version = "0.2.15"
 description = "A Python client for the TimeBack API (OneRoster 1.2 implementation)"
 authors = [
     {name = "Amanda Shipka"}
@@ -16,7 +16,7 @@ dependencies = [
 
 [tool.poetry]
 name = "timeback-client"
-version = "0.2.14"
+version = "0.2.15"
 description = "A Python client for the TimeBack API (OneRoster 1.2 implementation)"
 authors = ["Your Name <your.email@example.com>"]
 readme = "README.md"
