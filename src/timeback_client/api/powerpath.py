@@ -324,4 +324,32 @@ class PowerPathAPI(TimeBackService):
             endpoint="/createNewAttempt",
             method="POST",
             data=data
+        )
+        
+    def get_test_out_resource(self, course_id: str, student_id: str) -> Dict[str, Any]:
+        """Check if a test-out resource is available for a given course and student.
+        
+        Args:
+            course_id: The sourcedId of the course
+            student_id: The sourcedId of the student
+        
+        Returns:
+            Dict containing the test-out availability response from PowerPath API
+            Example:
+            {
+                "lessonType": "test-out",
+                "lessonId": null,
+                "finalized": false,
+                "toolProvider": null
+            }
+        """
+        params = {
+            "course": course_id,
+            "student": student_id
+        }
+        # Call the /testOut endpoint with course and student as query params
+        return self._make_request(
+            endpoint="/testOut",
+            method="GET",
+            params=params
         ) 

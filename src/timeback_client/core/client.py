@@ -54,6 +54,7 @@ class TimeBackService:
         self.client_secret = client_secret
         self._access_token = None
         self._token_expiry = None
+        self.environment = "production"  # Default environment, will be overridden by TimeBackClient
         
     def _get_auth_token(self) -> str:
         """Get a valid OAuth2 access token.
@@ -69,10 +70,19 @@ class TimeBackService:
             
         if not (self.client_id and self.client_secret):
             return None
-            
-        # Always use production IDP URL
-        idp_url = "https://alpha-auth-production-idp.auth.us-west-2.amazoncognito.com"
-        logger.info(f"Using production IDP URL for authentication: {idp_url}")
+        
+        # Use the right authentication endpoint based on environment
+        # Important: Print the environment for debugging
+        logger.info(f"Authentication using environment: {self.environment}")
+        
+        if self.environment == "staging":
+            # Use staging IDP URL for staging environment
+            idp_url = "https://alpha-auth-development-idp.auth.us-west-2.amazoncognito.com"
+            logger.info(f"Using staging IDP URL for authentication: {idp_url}")
+        else:
+            # Default to production IDP URL
+            idp_url = "https://alpha-auth-production-idp.auth.us-west-2.amazoncognito.com"
+            logger.info(f"Using production IDP URL for authentication: {idp_url}")
             
         response = requests.post(
             f"{idp_url}/oauth2/token",
@@ -401,8 +411,9 @@ class QTIService(TimeBackService):
     as defined in the QTI 3.0 specification.
     """
     
-    # Default QTI staging URL - make sure it includes /api
-    DEFAULT_QTI_URL = "https://qti.alpha-1edtech.com/api"
+    # Default QTI URLs - make sure they include /api
+    DEFAULT_QTI_STAGING_URL = "https://qti-staging.alpha-1edtech.com/api"
+    DEFAULT_QTI_PRODUCTION_URL = "https://qti.alpha-1edtech.com/api"
     
     def __init__(self, base_url: str, qti_api_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
         """Initialize QTI service.
@@ -415,7 +426,7 @@ class QTIService(TimeBackService):
         """
         # QTI service doesn't use the standard OneRoster base URL
         # Instead it has its own API endpoint
-        self.qti_url = (qti_api_url or self.DEFAULT_QTI_URL).rstrip('/')
+        self.qti_url = qti_api_url.rstrip('/')
         
         # Ensure the qti_url has the /api prefix
         if not self.qti_url.endswith('/api'):
@@ -512,9 +523,8 @@ class TimeBackClient:
     """
     
     # Update default URLs
-    DEFAULT_STAGING_URL = "http://staging.alpha-1edtech.com/"
+    DEFAULT_STAGING_URL = "https://api.staging.alpha-1edtech.com/"
     DEFAULT_PRODUCTION_URL = "https://api.alpha-1edtech.com/"  # Updated to use api subdomain
-    DEFAULT_QTI_URL = "https://qti.alpha-1edtech.com/api"  # Include /api in the QTI URL
     
     def __init__(
         self, 
@@ -527,22 +537,52 @@ class TimeBackClient:
         """Initialize TimeBack client with API URLs and authentication.
         
         Args:
-            api_url: The base URL of the TimeBack OneRoster API. If not provided, uses the production URL.
-            qti_api_url: The base URL of the QTI API. If not provided, uses the default production URL.
+            api_url: The base URL of the TimeBack OneRoster API. If not provided, uses the URL based on environment.
+            qti_api_url: The base URL of the QTI API. If not provided, uses the default URL based on environment.
             client_id: OAuth2 client ID for authentication
             client_secret: OAuth2 client secret for authentication
-            environment: Parameter kept for backward compatibility, but ignored. Always uses production.
+            environment: The environment to use - "staging" or "production"
         """
-        # Force production URL regardless of environment parameter
-        self.api_url = (api_url or self.DEFAULT_PRODUCTION_URL).rstrip('/')
-        self.qti_api_url = (qti_api_url or self.DEFAULT_QTI_URL).rstrip('/')
+        # Store environment for services to use
+        self.environment = environment.lower()
+        
+        # Select URL based on environment
+        if self.environment == "staging":
+            default_api_url = self.DEFAULT_STAGING_URL
+            default_qti_url = QTIService.DEFAULT_QTI_STAGING_URL
+            logger.info(f"Using staging environment")
+        else:
+            default_api_url = self.DEFAULT_PRODUCTION_URL
+            default_qti_url = QTIService.DEFAULT_QTI_PRODUCTION_URL
+            logger.info(f"Using production environment")
+            
+        # Use provided URL or default for environment
+        self.api_url = (api_url or default_api_url).rstrip('/')
+        self.qti_api_url = (qti_api_url or default_qti_url).rstrip('/')
         
         # Log the URL being used
-        logger.info(f"Initializing TimeBack client with production URL: {self.api_url}")
+        logger.info(f"Initializing TimeBack client with URL: {self.api_url}")
         
         # Initialize services with authentication
         self.rostering = RosteringService(self.api_url, client_id, client_secret)
         self.gradebook = GradebookService(self.api_url, client_id, client_secret)
         self.resources = ResourcesService(self.api_url, client_id, client_secret)
         self.qti = QTIService(self.api_url, self.qti_api_url, client_id, client_secret)
-        self.powerpath = PowerPathService(self.api_url, client_id, client_secret) 
+        self.powerpath = PowerPathService(self.api_url, client_id, client_secret)
+        
+        # Pass environment to all services
+        services = [self.rostering, self.gradebook, self.resources, self.qti, self.powerpath]
+        for service in services:
+            service.environment = self.environment
+            
+            # Also pass environment to all subservices (API classes in the registries)
+            if hasattr(service, '_api_registry'):
+                for api_instance in service._api_registry.values():
+                    if hasattr(api_instance, 'environment'):
+                        api_instance.environment = self.environment
+                        
+                    # IMPORTANT: Ensure we also propagate to API instances that might be created after initialization
+                    if hasattr(api_instance, '_api_registry'):
+                        for sub_api_instance in api_instance._api_registry.values():
+                            if hasattr(sub_api_instance, 'environment'):
+                                sub_api_instance.environment = self.environment 

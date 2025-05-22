@@ -26,6 +26,31 @@ class UsersAPI(TimeBackService):
             client_secret: OAuth2 client secret for authentication
         """
         super().__init__(base_url, "rostering", client_id=client_id, client_secret=client_secret)
+        # Ensure environment is initialized (will be set by TimeBackClient)
+        self.environment = "production"  # Default value that will be overridden
+    
+    def validate_environment(self) -> Dict[str, str]:
+        """Diagnostic method to validate the environment setting.
+        
+        Returns:
+            A dictionary with environment information
+        """
+        logger.info(f"[UsersAPI] Current environment: {self.environment}")
+        
+        if self.environment == "staging":
+            # Use staging IDP URL for staging environment
+            idp_url = "https://alpha-auth-development-idp.auth.us-west-2.amazoncognito.com"
+        else:
+            # Default to production IDP URL
+            idp_url = "https://alpha-auth-production-idp.auth.us-west-2.amazoncognito.com"
+            
+        logger.info(f"[UsersAPI] Using IDP URL for auth: {idp_url}")
+        
+        return {
+            "environment": self.environment,
+            "idp_url": idp_url,
+            "base_url": self.base_url
+        }
     
     def create_user(self, user: Union[User, Dict[str, Any]]) -> Dict[str, Any]:
         """Create a new user in the TimeBack API.
