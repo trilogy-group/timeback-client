@@ -56,8 +56,8 @@ class TimeBackService:
         self._token_expiry = None
         self.environment = "production"  # Default environment, will be overridden by TimeBackClient
         
-    def _get_auth_token(self) -> str:
-        """Get a valid OAuth2 access token.
+                def _get_auth_token(self) -> str:
+                    """Get a valid OAuth2 access token.
         
         Returns:
             str: The access token
@@ -81,8 +81,8 @@ class TimeBackService:
             logger.info(f"Using staging IDP URL for authentication: {idp_url}")
         else:
             # Default to production IDP URL
-        idp_url = "https://alpha-auth-production-idp.auth.us-west-2.amazoncognito.com"
-        logger.info(f"Using production IDP URL for authentication: {idp_url}")
+            idp_url = "https://alpha-auth-production-idp.auth.us-west-2.amazoncognito.com"
+            logger.info(f"Using production IDP URL for authentication: {idp_url}")
             
         response = requests.post(
             f"{idp_url}/oauth2/token",
