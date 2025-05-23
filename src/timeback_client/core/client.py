@@ -70,7 +70,7 @@ class TimeBackService:
             
         if not (self.client_id and self.client_secret):
             return None
-        
+            
         # Use the right authentication endpoint based on environment
         # Important: Print the environment for debugging
         logger.info(f"Authentication using environment: {self.environment}")
@@ -81,8 +81,8 @@ class TimeBackService:
             logger.info(f"Using staging IDP URL for authentication: {idp_url}")
         else:
             # Default to production IDP URL
-            idp_url = "https://alpha-auth-production-idp.auth.us-west-2.amazoncognito.com"
-            logger.info(f"Using production IDP URL for authentication: {idp_url}")
+        idp_url = "https://alpha-auth-production-idp.auth.us-west-2.amazoncognito.com"
+        logger.info(f"Using production IDP URL for authentication: {idp_url}")
             
         response = requests.post(
             f"{idp_url}/oauth2/token",
@@ -568,7 +568,7 @@ class TimeBackClient:
         self.gradebook = GradebookService(self.api_url, client_id, client_secret)
         self.resources = ResourcesService(self.api_url, client_id, client_secret)
         self.qti = QTIService(self.api_url, self.qti_api_url, client_id, client_secret)
-        self.powerpath = PowerPathService(self.api_url, client_id, client_secret)
+        self.powerpath = PowerPathService(self.api_url, client_id, client_secret) 
         
         # Pass environment to all services
         services = [self.rostering, self.gradebook, self.resources, self.qti, self.powerpath]
