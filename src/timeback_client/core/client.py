@@ -56,8 +56,8 @@ class TimeBackService:
         self._token_expiry = None
         self.environment = "production"  # Default environment, will be overridden by TimeBackClient
         
-                def _get_auth_token(self) -> str:
-                    """Get a valid OAuth2 access token.
+    def _get_auth_token(self) -> str:
+        """Get a valid OAuth2 access token.
         
         Returns:
             str: The access token
