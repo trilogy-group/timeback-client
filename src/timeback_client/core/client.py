@@ -246,28 +246,21 @@ class RosteringService(TimeBackService):
         try:
             # Import the api package using absolute import
             api_package = importlib.import_module("timeback_client.api")
-            logger.info("Successfully imported API package")
             
             # Get all modules in the api package
             all_modules = getattr(api_package, "__all__", [])
-            logger.info(f"Found modules in __all__: {all_modules}")
             
             for module_name in all_modules:
                 try:
-                    logger.info(f"Attempting to import module: {module_name}")
                     # Import the module using absolute import
                     module = importlib.import_module(f"timeback_client.api.{module_name}")
-                    logger.info(f"Successfully imported module: {module_name}")
                     
                     # Find all classes that inherit from TimeBackService
                     for name, obj in inspect.getmembers(module, inspect.isclass):
-                        logger.info(f"Found class {name} in module {module_name}")
                         if issubclass(obj, TimeBackService) and obj != TimeBackService:
                             # Register the API class
                             entity_name = module_name.lower()
-                            logger.info(f"Registering {name} as {entity_name}")
                             self._api_registry[entity_name] = obj(self.base_url, self.client_id, self.client_secret)
-                            logger.info(f"Registered API class {name} for entity {entity_name}")
                 except ImportError as e:
                     logger.warning(f"Could not import API module {module_name}: {e}")
                     logger.warning(f"Import error details: {str(e)}")
@@ -286,12 +279,10 @@ class RosteringService(TimeBackService):
             # Import and register UsersAPI
             from ..api.users import UsersAPI
             self._api_registry["users"] = UsersAPI(self.base_url, self.client_id, self.client_secret)
-            logger.info("Registered UsersAPI")
             
             # Import and register OrgsAPI
             from ..api.orgs import OrgsAPI
             self._api_registry["orgs"] = OrgsAPI(self.base_url, self.client_id, self.client_secret)
-            logger.info("Registered OrgsAPI")
         except ImportError as e:
             logger.error(f"Could not import known API classes: {e}")
     
@@ -351,7 +342,6 @@ class GradebookService(TimeBackService):
             from ..api.assessment_results import AssessmentResultsAPI
             # Register assessment results API
             self._api_registry["assessment_results"] = AssessmentResultsAPI(self.base_url, self.client_id, self.client_secret)
-            logger.info("Registered AssessmentResultsAPI")
         except ImportError as e:
             logger.error(f"Could not import Gradebook API modules: {e}")
             
@@ -371,25 +361,19 @@ class ResourcesService(TimeBackService):
     
     def __init__(self, base_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
         """Initialize resources service."""
-        logger.info("Initializing ResourcesService")  # Debug log
         super().__init__(base_url, "resources", client_id, client_secret)
         self._api_registry = {}
         self._load_api_modules()
-        logger.info(f"ResourcesService initialized with registry: {self._api_registry}")  # Debug log
         
     def _load_api_modules(self):
         """Dynamically load all API modules for Resources."""
         try:
-            logger.info("Attempting to load ResourcesAPI")  # Debug log
             # Import the resources API module
             from ..api.resources import ResourcesAPI
-            logger.info("Successfully imported ResourcesAPI")  # Debug log
             
             # Register API class
             api_instance = ResourcesAPI(self.base_url, self.client_id, self.client_secret)
             self._api_registry["resources"] = api_instance
-            logger.info("Registered ResourcesAPI for entity resources")
-            logger.info(f"Available methods on ResourcesAPI: {dir(api_instance)}")  # Debug log
         except ImportError as e:
             logger.error(f"Could not import Resources API modules: {str(e)}", exc_info=True)
         except Exception as e:
@@ -397,8 +381,6 @@ class ResourcesService(TimeBackService):
             
     def __getattr__(self, name):
         """Dynamically access API classes by name."""
-        logger.info(f"Attempting to access attribute: {name}")  # Debug log
-        logger.info(f"Available registry keys: {list(self._api_registry.keys())}")  # Debug log
         if name in self._api_registry:
             return self._api_registry[name]
         
@@ -412,7 +394,7 @@ class QTIService(TimeBackService):
     """
     
     # Default QTI URLs - make sure they include /api
-    DEFAULT_QTI_STAGING_URL = "https://qti-staging.alpha-1edtech.com/api"
+    DEFAULT_QTI_STAGING_URL = "https://qti.alpha-1edtech.com/api"
     DEFAULT_QTI_PRODUCTION_URL = "https://qti.alpha-1edtech.com/api"
     
     def __init__(self, base_url: str, qti_api_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
@@ -433,7 +415,6 @@ class QTIService(TimeBackService):
             if '/api' not in self.qti_url:
                 self.qti_url = f"{self.qti_url}/api"
             
-        logger.info(f"Initializing QTI service with URL: {self.qti_url}")
         
         # We still call the parent constructor, but override the methods to use qti_url
         super().__init__(base_url, "qti", client_id, client_secret)
@@ -453,7 +434,6 @@ class QTIService(TimeBackService):
             self._api_registry["stimuli"] = StimulusAPI(self.qti_url, self.client_id, self.client_secret)
             self._api_registry["assessment_tests"] = AssessmentTestAPI(self.qti_url, self.client_id, self.client_secret)
             
-            logger.info("Registered QTI APIs with QTI URL: %s", self.qti_url)
         except ImportError as e:
             logger.error(f"Could not import QTI API modules: {e}")
     
@@ -491,7 +471,6 @@ class PowerPathService(TimeBackService):
             from ..api.powerpath import PowerPathAPI
             # Register API directly since PowerPath is self-contained
             self._api_registry["powerpath"] = PowerPathAPI(self.base_url, self.client_id, self.client_secret)
-            logger.info("Registered PowerPathAPI")
         except ImportError as e:
             logger.error(f"Could not import PowerPath API module: {e}")
             
