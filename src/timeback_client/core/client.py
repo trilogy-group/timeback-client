@@ -22,6 +22,7 @@ import importlib
 import inspect
 import json
 import time
+import os  # Import os for environment variable lookup
 
 logger = logging.getLogger(__name__)
 
@@ -394,7 +395,7 @@ class QTIService(TimeBackService):
     """
     
     # Default QTI URLs - make sure they include /api
-    DEFAULT_QTI_STAGING_URL = "https://qti.alpha-1edtech.com/api"
+    DEFAULT_QTI_STAGING_URL = "https://qti-staging.alpha-1edtech.com/api"
     DEFAULT_QTI_PRODUCTION_URL = "https://qti.alpha-1edtech.com/api"
     
     def __init__(self, base_url: str, qti_api_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
@@ -506,12 +507,12 @@ class TimeBackClient:
     DEFAULT_PRODUCTION_URL = "https://api.alpha-1edtech.com/"  # Updated to use api subdomain
     
     def __init__(
-        self, 
+        self,
         api_url: Optional[str] = None,
         qti_api_url: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
-        environment: str = "production"  # Default to production
+        environment: Optional[str] = None  # Will default to TIMEBACK_ENVIRONMENT or production
     ):
         """Initialize TimeBack client with API URLs and authentication.
         
@@ -522,8 +523,10 @@ class TimeBackClient:
             client_secret: OAuth2 client secret for authentication
             environment: The environment to use - "staging" or "production"
         """
-        # Store environment for services to use
-        self.environment = environment.lower()
+        # Determine environment: argument, env var, or default to production
+        env_var = os.environ.get('TIMEBACK_ENVIRONMENT')
+        effective_env = (environment or env_var or 'production').lower()
+        self.environment = effective_env
         
         # Select URL based on environment
         if self.environment == "staging":
@@ -535,7 +538,7 @@ class TimeBackClient:
             default_qti_url = QTIService.DEFAULT_QTI_PRODUCTION_URL
             logger.info(f"Using production environment")
             
-        # Use provided URL or default for environment
+        # Use provided URLs or defaults for environment
         self.api_url = (api_url or default_api_url).rstrip('/')
         self.qti_api_url = (qti_api_url or default_qti_url).rstrip('/')
         

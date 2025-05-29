@@ -74,6 +74,20 @@ class AssessmentItemsAPI(TimeBackService):
             params=params
         )
         
+        # Retry logic: if QTI staging returns 404, retry against production QTI endpoint
+        if response.status_code == 404 and getattr(self, 'environment', '').lower() == 'staging':
+            logger.warning("QTI staging endpoint returned 404, retrying against production QTI")
+            from ..core.client import QTIService
+            prod_url = urljoin(QTIService.DEFAULT_QTI_PRODUCTION_URL.rstrip('/') + '/', endpoint.lstrip('/'))
+            logger.info("Retrying request to production QTI URL: %s", prod_url)
+            response = requests.request(
+                method=method,
+                url=prod_url,
+                headers=headers,
+                json=data if data else None,
+                params=params
+            )
+        
         if not response.ok:
             logger.error("Request failed with status %d", response.status_code)
             logger.error("Response body: %s", response.text)

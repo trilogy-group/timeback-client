@@ -92,6 +92,35 @@ class AssessmentTestAPI(TimeBackService):
         except json.JSONDecodeError as e:
             logger.warning(f"Could not parse response as JSON: {e}")
             return {"message": "Success (non-JSON response)", "text": response.text}
+        
+        # Retry logic: if QTI staging returns 404, retry against production QTI endpoint
+        if response.status_code == 404 and getattr(self, 'environment', '').lower() == 'staging':
+            logger.warning("QTI staging endpoint returned 404, retrying against production QTI")
+            from ..core.client import QTIService
+            prod_url = urljoin(QTIService.DEFAULT_QTI_PRODUCTION_URL.rstrip('/') + '/', endpoint.lstrip('/'))
+            logger.info("Retrying request to production QTI URL: %s", prod_url)
+            response = requests.request(
+                method=method,
+                url=prod_url,
+                headers=headers,
+                json=data if data else None,
+                params=params
+            )
+        
+        response.raise_for_status()
+        
+        # Handle empty responses
+        if not response.text.strip():
+            logger.info("Empty response received from %s", url)
+            return {"message": "Success (empty response)"}
+            
+        try:
+            response_data = response.json()
+            logger.info("Successful response from %s", url)
+            return response_data
+        except json.JSONDecodeError as e:
+            logger.warning(f"Could not parse response as JSON: {e}")
+            return {"message": "Success (non-JSON response)", "text": response.text}
     
     # ===================================================
     # Assessment Test Endpoints
