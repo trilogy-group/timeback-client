@@ -352,4 +352,116 @@ class PowerPathAPI(TimeBackService):
             endpoint="/testOut",
             method="GET",
             params=params
+        )
+
+    # Add external test assignment endpoint
+    def make_external_test_assignment(
+        self,
+        student: str,
+        lesson: str,
+        application_name: str
+    ) -> Dict[str, Any]:
+        """
+        Create an external test assignment for a student in a lesson via an external application.
+        Args:
+            student: The sourcedId of the student
+            lesson: The sourcedId of the component or resource
+            application_name: The external tool provider name (e.g. 'edulastic')
+        Returns:
+            Dict containing testSessionId, url, username, password
+        """
+        data = {
+            "student": student,
+            "lesson": lesson,
+            "applicationName": application_name
+        }
+        return self._make_request(
+            endpoint="/makeExternalTestAssignment",
+            method="POST",
+            data=data
+        )
+
+    def get_external_test_assignment_results(
+        self,
+        student: str,
+        lesson: str
+    ) -> Dict[str, Any]:
+        """
+        Fetch results for an external test assignment.
+        Args:
+            student: The sourcedId of the student
+            lesson: The sourcedId of the component or resource
+        Returns:
+            Dict containing assignment results, scores, questions, credentials, etc.
+        """
+        params = {
+            "student": student,
+            "lesson": lesson
+        }
+        return self._make_request(
+            endpoint="/getExternalTestAssignmentResults",
+            method="GET",
+            params=params
+        )
+
+    def create_external_test_out(
+        self,
+        course_id: str,
+        lesson_title: str,
+        launch_url: str,
+        tool_provider: str,
+        unit_title: str,
+        description: str,
+        vendor_id: str,
+        xp: int,
+        resource_metadata: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Create or update a ComponentResource to act as a TestOut lesson in a course.
+        This allows integrating with external test-taking platforms (like Edulastic) for content delivery.
+        
+        Args:
+            course_id: The sourcedId of the Course to create the external test for
+            lesson_title: The title of the external test reference
+            launch_url: The URL to the external test system (e.g., Edulastic test)
+            tool_provider: The type of external service (currently only 'edulastic' supported)
+            unit_title: The title of the unit containing the external test
+            description: Description of the external test that will be added to the Resource entity's metadata
+            vendor_id: The ID of the test in the spreadsheet
+            xp: The XP value for the resource
+            resource_metadata: Optional additional metadata for the external test resource
+            
+        Returns:
+            Dict containing the response from the API
+            
+        Raises:
+            requests.exceptions.HTTPError: If course not found (404) or other API error
+            
+        Note:
+            The endpoint creates or updates (if they already exist) the following entities:
+            - A CourseComponent for the course to hold the TestOut lesson
+            - A Resource with a "lessonType" of "TestOut" and the external service details as metadata
+            - A ComponentResource acting as the TestOut lesson
+        """
+        logger.info(f"Creating external test out for course {course_id} with tool provider {tool_provider}")
+        
+        data = {
+            "courseId": course_id,
+            "lessonTitle": lesson_title,
+            "launchUrl": launch_url,
+            "toolProvider": tool_provider,
+            "unitTitle": unit_title,
+            "description": description,
+            "vendorId": vendor_id,
+            "xp": xp
+        }
+        
+        # Only include resourceMetadata if provided
+        if resource_metadata:
+            data["resourceMetadata"] = resource_metadata
+            
+        return self._make_request(
+            endpoint="/createExternalTestOut",
+            method="POST",
+            data=data
         ) 
