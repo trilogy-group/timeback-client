@@ -381,7 +381,7 @@ class PowerPathAPI(TimeBackService):
             data=data
         )
 
-    def get_external_test_assignment_results(
+    def import_external_test_assignment_results(
         self,
         student: str,
         lesson: str
@@ -399,7 +399,7 @@ class PowerPathAPI(TimeBackService):
             "lesson": lesson
         }
         return self._make_request(
-            endpoint="/getExternalTestAssignmentResults",
+            endpoint="/importExternalTestAssignmentResults",
             method="GET",
             params=params
         )
