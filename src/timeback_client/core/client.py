@@ -486,6 +486,56 @@ class PowerPathService(TimeBackService):
             
         raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
 
+class CaliperService(TimeBackService):
+    """Client for the TimeBack Caliper API.
+    
+    This service handles sending Caliper events to the Caliper-specific endpoint.
+    It does not follow the OneRoster path structure and uses its own base URL.
+    """
+    
+    def __init__(self, caliper_api_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
+        """Initialize Caliper service.
+        
+        Args:
+            caliper_api_url: The base URL of the Caliper API (e.g., https://caliper.alpha-1edtech.com)
+            client_id: OAuth2 client ID for authentication
+            client_secret: OAuth2 client secret for authentication
+        """
+        # We use the caliper_api_url as the base_url for this service
+        super().__init__(caliper_api_url, "caliper", client_id, client_secret)
+        # The Caliper API does not use the /ims/oneroster/v1p2 path, so we override it.
+        self.api_path = ""
+
+    def send_event(self, envelope: Dict[str, Any]) -> Dict[str, Any]:
+        """Sends a Caliper event envelope to the /caliper/event endpoint.
+        
+        Args:
+            envelope: The Caliper envelope data to send.
+            
+        Returns:
+            The JSON response from the API.
+        """
+        return self._make_request(
+            endpoint="/caliper/event",
+            method="POST",
+            data=envelope
+        )
+
+    def validate_event(self, envelope: Dict[str, Any]) -> Dict[str, Any]:
+        """Sends a Caliper event envelope to the /caliper/event/validate endpoint for validation.
+        
+        Args:
+            envelope: The Caliper envelope data to validate.
+            
+        Returns:
+            The JSON validation response from the API.
+        """
+        return self._make_request(
+            endpoint="/caliper/event/validate",
+            method="POST",
+            data=envelope
+        )
+
 class TimeBackClient:
     """Main client for TimeBack API.
     
@@ -505,11 +555,14 @@ class TimeBackClient:
     # Update default URLs
     DEFAULT_STAGING_URL = "https://api.staging.alpha-1edtech.com/"
     DEFAULT_PRODUCTION_URL = "https://api.alpha-1edtech.com/"  # Updated to use api subdomain
+    DEFAULT_CALIPER_STAGING_URL = "https://caliper.staging.alpha-1edtech.com"
+    DEFAULT_CALIPER_PRODUCTION_URL = "https://caliper.alpha-1edtech.com"
     
     def __init__(
         self,
         api_url: Optional[str] = None,
         qti_api_url: Optional[str] = None,
+        caliper_api_url: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
         environment: Optional[str] = None  # Will default to TIMEBACK_ENVIRONMENT or production
@@ -519,6 +572,7 @@ class TimeBackClient:
         Args:
             api_url: The base URL of the TimeBack OneRoster API. If not provided, uses the URL based on environment.
             qti_api_url: The base URL of the QTI API. If not provided, uses the default URL based on environment.
+            caliper_api_url: The base URL of the Caliper API. If not provided, uses the default URL based on environment.
             client_id: OAuth2 client ID for authentication
             client_secret: OAuth2 client secret for authentication
             environment: The environment to use - "staging" or "production"
@@ -532,15 +586,18 @@ class TimeBackClient:
         if self.environment == "staging":
             default_api_url = self.DEFAULT_STAGING_URL
             default_qti_url = QTIService.DEFAULT_QTI_STAGING_URL
+            default_caliper_url = self.DEFAULT_CALIPER_STAGING_URL
             logger.info(f"Using staging environment")
         else:
             default_api_url = self.DEFAULT_PRODUCTION_URL
             default_qti_url = QTIService.DEFAULT_QTI_PRODUCTION_URL
+            default_caliper_url = self.DEFAULT_CALIPER_PRODUCTION_URL
             logger.info(f"Using production environment")
             
         # Use provided URLs or defaults for environment
         self.api_url = (api_url or default_api_url).rstrip('/')
         self.qti_api_url = (qti_api_url or default_qti_url).rstrip('/')
+        self.caliper_api_url = (caliper_api_url or default_caliper_url).rstrip('/')
         
         # Log the URL being used
         logger.info(f"Initializing TimeBack client with URL: {self.api_url}")
@@ -551,9 +608,10 @@ class TimeBackClient:
         self.resources = ResourcesService(self.api_url, client_id, client_secret)
         self.qti = QTIService(self.api_url, self.qti_api_url, client_id, client_secret)
         self.powerpath = PowerPathService(self.api_url, client_id, client_secret) 
+        self.caliper = CaliperService(self.caliper_api_url, client_id, client_secret)
         
         # Pass environment to all services
-        services = [self.rostering, self.gradebook, self.resources, self.qti, self.powerpath]
+        services = [self.rostering, self.gradebook, self.resources, self.qti, self.powerpath, self.caliper]
         for service in services:
             service.environment = self.environment
             

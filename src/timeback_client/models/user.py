@@ -118,6 +118,13 @@ class User(BaseModel):
             raise ValueError('At least one role is required')
         return v
 
+    @field_validator('dateLastModified', mode='before')
+    def convert_dateLastModified(cls, v):
+        """Convert datetime dateLastModified to ISO string."""
+        if isinstance(v, datetime):
+            return v.isoformat() + 'Z'
+        return v
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert model to dictionary for API requests."""
         data = self.model_dump(exclude_none=True)
