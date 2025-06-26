@@ -486,6 +486,46 @@ class PowerPathService(TimeBackService):
             
         raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
 
+class CaseService(TimeBackService):
+    """Client for 1EdTech CASE (Competencies and Academic Standards Exchange) API endpoints.
+    
+    This service handles CASE-specific operations for managing competency frameworks,
+    learning standards, and their relationships.
+    """
+    
+    def __init__(self, base_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
+        """Initialize CASE service.
+        
+        Args:
+            base_url: The base URL of the TimeBack API
+            client_id: OAuth2 client ID for authentication
+            client_secret: OAuth2 client secret for authentication
+        """
+        # Call parent but override api_path since CASE uses IMS Global path structure
+        super().__init__(base_url, "case", client_id, client_secret)
+        self.api_path = "/ims/case/v1p1"  # Override the OneRoster path
+        self._api_registry = {}
+        self._load_api_modules()
+        
+    def _load_api_modules(self):
+        """Load CASE API modules."""
+        try:
+            from ..api.case import CaseAPI
+            # Register API directly since CASE is self-contained
+            self._api_registry["case"] = CaseAPI(self.base_url, self.client_id, self.client_secret)
+        except ImportError as e:
+            logger.error(f"Could not import CASE API module: {e}")
+            
+    def __getattr__(self, name):
+        """Access CASE API methods directly."""
+        if name in self._api_registry:
+            return self._api_registry[name]
+            
+        # Allow direct access to CASE methods for convenience
+        if "case" in self._api_registry:
+            return getattr(self._api_registry["case"], name)
+            
+        raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
 class CaliperService(TimeBackService):
     """Client for the TimeBack Caliper API.
     
@@ -553,6 +593,7 @@ class TimeBackClient:
         >>> resources = client.resources.list_resources()  # Coming soon
         >>> qti_items = client.qti.assessment_items.list_assessment_items()  # Using QTI API
         >>> syllabus = client.powerpath.get_course_syllabus("course-id")  # Using PowerPath API
+        >>> documents = client.case.get_all_cf_documents()  # Using CASE API
     """
     
     # Update default URLs
@@ -611,10 +652,11 @@ class TimeBackClient:
         self.resources = ResourcesService(self.api_url, client_id, client_secret)
         self.qti = QTIService(self.api_url, self.qti_api_url, client_id, client_secret)
         self.powerpath = PowerPathService(self.api_url, client_id, client_secret) 
+        self.case = CaseService(self.api_url, client_id, client_secret)
         self.caliper = CaliperService(self.caliper_api_url, client_id, client_secret)
         
         # Pass environment to all services
-        services = [self.rostering, self.gradebook, self.resources, self.qti, self.powerpath, self.caliper]
+        services = [self.rostering, self.gradebook, self.resources, self.qti, self.powerpath, self.case, self.caliper]
         for service in services:
             service.environment = self.environment
             
