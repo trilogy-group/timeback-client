@@ -529,7 +529,8 @@ class CaseService(TimeBackService):
 class CaliperService(TimeBackService):
     """Client for the TimeBack Caliper API.
     
-    This service handles sending Caliper events to the Caliper-specific endpoint.
+    This service handles all Caliper event operations including sending,
+    validating, and retrieving events from the Caliper-specific endpoint.
     It does not follow the OneRoster path structure and uses its own base URL.
     """
     
@@ -545,36 +546,38 @@ class CaliperService(TimeBackService):
         super().__init__(caliper_api_url, "caliper", client_id, client_secret)
         # The Caliper API does not use the /ims/oneroster/v1p2 path, so we override it.
         self.api_path = ""
-
-    def send_event(self, envelope: Dict[str, Any]) -> Dict[str, Any]:
-        """Sends a Caliper event envelope to the /caliper/event endpoint.
+        self._api_registry = {}
+        self._load_api_modules()
         
-        Args:
-            envelope: The Caliper envelope data to send.
+    def _load_api_modules(self):
+        """Load Caliper API modules."""
+        try:
+            from ..api.caliper import CaliperAPI
+            # Register the Caliper API
+            self._api_registry["caliper"] = CaliperAPI(self.base_url, self.client_id, self.client_secret)
+        except ImportError as e:
+            logger.error(f"Could not import Caliper API module: {e}")
             
-        Returns:
-            The JSON response from the API.
-        """
-        return self._make_request(
-            endpoint="/caliper/event",
-            method="POST",
-            data=envelope
-        )
-
-    def validate_event(self, envelope: Dict[str, Any]) -> Dict[str, Any]:
-        """Sends a Caliper event envelope to the /caliper/event/validate endpoint for validation.
+    def __getattr__(self, name):
+        """Access Caliper API methods.
         
-        Args:
-            envelope: The Caliper envelope data to validate.
-            
-        Returns:
-            The JSON validation response from the API.
+        This allows for syntax like:
+        client.caliper.send_event(envelope)
+        client.caliper.validate_event(envelope)
+        client.caliper.list_events(limit=100)
         """
-        return self._make_request(
-            endpoint="/caliper/event/validate",
-            method="POST",
-            data=envelope
-        )
+        # First check if it's in the registry
+        if name in self._api_registry:
+            return self._api_registry[name]
+            
+        # For backward compatibility, check if it's a direct method
+        # (send_event, validate_event, list_events)
+        if "caliper" in self._api_registry:
+            caliper_api = self._api_registry["caliper"]
+            if hasattr(caliper_api, name):
+                return getattr(caliper_api, name)
+                
+        raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
 
 class TimeBackClient:
     """Main client for TimeBack API.
@@ -596,7 +599,7 @@ class TimeBackClient:
     # Update default URLs
     DEFAULT_STAGING_URL = "https://api.staging.alpha-1edtech.com/"
     DEFAULT_PRODUCTION_URL = "https://api.alpha-1edtech.com/"  # Updated to use api subdomain
-    DEFAULT_CALIPER_STAGING_URL = "https://caliper.staging.alpha-1edtech.com"
+    DEFAULT_CALIPER_STAGING_URL = "https://caliper-staging.alpha-1edtech.com"
     DEFAULT_CALIPER_PRODUCTION_URL = "https://caliper.alpha-1edtech.com"
     
     def __init__(
