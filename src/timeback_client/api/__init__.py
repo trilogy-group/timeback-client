@@ -17,4 +17,5 @@ __all__ = [
     "enrollments",
     "component_resources",  # Component resource management API
     "students",
+    "caliper",  # Caliper events API
 ]

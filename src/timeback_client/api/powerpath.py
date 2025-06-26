@@ -4,9 +4,10 @@ This module provides methods for interacting with PowerPath-specific endpoints
 in the TimeBack API, including syllabus access, assessment progress, and question management.
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
 import logging
 from ..core.client import TimeBackService
+from ..models.lesson_plan import LessonPlan
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -85,6 +86,241 @@ class PowerPathAPI(TimeBackService):
         logger.info(f"Fetching course progress for student {student_id} in course {course_id}")
         return self._make_request(
             endpoint=f"/lessonPlans/getCourseProgress/{course_id}/student/{student_id}"
+        )
+        
+    def get_lesson_plan(self, course_id: str, user_id: str, return_raw: bool = False) -> Union[LessonPlan, Dict[str, Any]]:
+        """Get lesson plan for a specific student in a course.
+        
+        This endpoint returns the customized lesson plan structure for a student,
+        including their progress data overlaid on the plan components. Lesson plans
+        are automatically created when courses are assigned to students.
+        
+        Args:
+            course_id: The unique identifier of the course
+            user_id: The unique identifier of the student/user
+            return_raw: If True, return raw dict instead of LessonPlan object
+            
+        Returns:
+            LessonPlan object or dict containing the lesson plan structure with progress data
+            
+        Raises:
+            requests.exceptions.HTTPError: If course/user not found (404) or other API error
+            
+        Example response:
+        {
+            "lessonPlan": {
+                "lessonPlan": {
+                    "course": {
+                        "sourcedId": "course-123",
+                        "title": "Mathematics Grade 5",
+                        "courseCode": "MATH-5",
+                        "subjects": ["mathematics"],
+                        "grades": ["5"]
+                    },
+                    "subComponents": [
+                        {
+                            "sourcedId": "component-1",
+                            "title": "Unit 1: Numbers and Operations",
+                            "sortOrder": 10,
+                            "type": "container",
+                            "componentProgress": {
+                                "sourcedId": "component-1",
+                                "progress": 75,
+                                "status": "in_progress",
+                                "xp": 150
+                            },
+                            "subComponents": [
+                                {
+                                    "sourcedId": "lesson-1",
+                                    "title": "Introduction to Fractions",
+                                    "sortOrder": 10,
+                                    "type": "lesson",
+                                    "componentProgress": {
+                                        "sourcedId": "lesson-1",
+                                        "progress": 100,
+                                        "status": "completed",
+                                        "xp": 50,
+                                        "results": [
+                                            {
+                                                "score": 85,
+                                                "accuracy": 85,
+                                                "completedAt": "2024-01-15T10:30:00Z"
+                                            }
+                                        ]
+                                    },
+                                    "componentResources": [...]
+                                }
+                            ]
+                        }
+                    ],
+                    "metadata": {
+                        "createdAt": "2024-01-01T00:00:00Z",
+                        "lastModified": "2024-01-15T10:30:00Z",
+                        "isCustomized": true
+                    }
+                }
+            }
+        }
+        """
+        logger.info(f"Fetching lesson plan for user {user_id} in course {course_id}")
+        response = self._make_request(
+            endpoint=f"/lessonPlans/{course_id}/{user_id}"
+        )
+        
+        if return_raw:
+            return response
+            
+        # Parse response into LessonPlan object
+        return LessonPlan.from_dict(response)
+        
+    def create_lesson_plan(self, course_id: str, user_id: str, class_id: str) -> Dict[str, Any]:
+        """Create a lesson plan for a specific student in a course.
+        
+        This endpoint creates a new lesson plan for a student when they are assigned
+        to a course. The lesson plan is based on the course structure but can be
+        customized per student without affecting the base course.
+        
+        Args:
+            course_id: The unique identifier of the course
+            user_id: The unique identifier of the student/user
+            class_id: The unique identifier of the class
+            
+        Returns:
+            Dict containing the response from the API, typically including
+            the created lesson plan ID and status
+            
+        Raises:
+            requests.exceptions.HTTPError: If creation fails or parameters are invalid
+            
+        Example usage:
+            >>> client = TimeBackClient()
+            >>> result = client.powerpath.create_lesson_plan(
+            ...     course_id="course-123",
+            ...     user_id="user-456",
+            ...     class_id="class-789"
+            ... )
+            >>> print(result)
+            {
+                "success": true,
+                "lessonPlanId": "lesson-plan-abc",
+                "message": "Lesson plan created successfully"
+            }
+        """
+        logger.info(f"Creating lesson plan for user {user_id} in course {course_id} for class {class_id}")
+        
+        data = {
+            "courseId": course_id,
+            "userId": user_id,
+            "classId": class_id
+        }
+        
+        return self._make_request(
+            endpoint="/lessonPlans/",
+            method="POST",
+            data=data
+        )
+        
+    def delete_lesson_plan(self, lesson_plan_id: str) -> Dict[str, Any]:
+        """Delete a specific lesson plan.
+        
+        This will permanently remove a student's lesson plan. This is a destructive
+        action and should be used with caution. It will also remove associated
+        progress data for that lesson plan.
+        
+        Args:
+            lesson_plan_id: The unique identifier of the lesson plan to delete.
+            
+        Returns:
+            Dict containing the response from the API, typically a success message.
+            
+        Raises:
+            requests.exceptions.HTTPError: If deletion fails, e.g., lesson plan not found (404).
+        """
+        logger.info(f"Deleting lesson plan with ID: {lesson_plan_id}")
+        return self._make_request(
+            endpoint=f"/lessonPlans/{lesson_plan_id}",
+            method="DELETE"
+        )
+        
+    def update_lesson_plan_item(
+        self,
+        lesson_plan_item_id: str,
+        lesson_plan_id: str,
+        type: str = "component",
+        component_id: Optional[str] = None,
+        component_resource_id: Optional[str] = None,
+        order: int = 1,
+        parent_id: Optional[str] = None,
+        skipped: bool = False
+    ) -> Dict[str, Any]:
+        """Update a specific item within a lesson plan.
+        
+        This endpoint allows updating individual items (components or resources) within
+        a student's lesson plan. You can reorder items, change their parent, or mark
+        them as skipped.
+        
+        Args:
+            lesson_plan_item_id: The unique identifier of the lesson plan item to update
+            lesson_plan_id: The unique identifier of the lesson plan
+            type: The type of item - "component" or "resource" (default: "component")
+            component_id: The component ID if type is "component" (mutually exclusive with component_resource_id)
+            component_resource_id: The resource ID if type is "resource" (mutually exclusive with component_id)
+            order: The sort order of this item within its parent (default: 1)
+            parent_id: The ID of the parent item, or None for root level
+            skipped: Whether this item should be marked as skipped (default: False)
+            
+        Returns:
+            Dict containing the response from the API
+            
+        Raises:
+            requests.exceptions.HTTPError: If update fails or parameters are invalid
+            ValueError: If both component_id and component_resource_id are provided
+            
+        Example usage:
+            >>> client = TimeBackClient()
+            >>> # Update a component's order
+            >>> result = client.powerpath.update_lesson_plan_item(
+            ...     lesson_plan_item_id="item-123",
+            ...     lesson_plan_id="plan-456",
+            ...     type="component",
+            ...     component_id="comp-789",
+            ...     order=3
+            ... )
+            >>> # Mark a resource as skipped
+            >>> result = client.powerpath.update_lesson_plan_item(
+            ...     lesson_plan_item_id="item-abc",
+            ...     lesson_plan_id="plan-456",
+            ...     type="resource",
+            ...     component_resource_id="res-def",
+            ...     skipped=True
+            ... )
+        """
+        # Validate mutually exclusive parameters
+        if component_id is not None and component_resource_id is not None:
+            raise ValueError("Cannot provide both component_id and component_resource_id")
+        
+        if type == "component" and component_resource_id is not None:
+            raise ValueError("component_resource_id should not be provided when type is 'component'")
+            
+        if type == "resource" and component_id is not None:
+            raise ValueError("component_id should not be provided when type is 'resource'")
+        
+        logger.info(f"Updating lesson plan item {lesson_plan_item_id} in plan {lesson_plan_id}")
+        
+        data = {
+            "lessonPlanId": lesson_plan_id,
+            "type": type,
+            "componentId": component_id,
+            "componentResourceId": component_resource_id,
+            "order": order,
+            "parentId": parent_id,
+            "skipped": skipped
+        }
+        
+        return self._make_request(
+            endpoint=f"/lessonPlans/items/{lesson_plan_item_id}",
+            method="PATCH",
+            data=data
         )
         
     def get_assessment_progress(
