@@ -310,4 +310,40 @@ class UsersAPI(TimeBackService):
         if fields:
             params['fields'] = ','.join(fields)
             
-        return self._make_request("/students", params=params) 
+        return self._make_request("/students", params=params)
+
+    def get_user_demographics(self, user_id: str, fields: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Get demographics for a specific user from the TimeBack API."""
+        params: Dict[str, Any] = {}
+        if fields:
+            params['fields'] = ','.join(fields)
+        return self._make_request(
+            endpoint=f"/users/{user_id}/demographics",
+            params=params
+        )
+
+    def create_user_demographics(self, demographics: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a new demographics record for a user in the TimeBack API."""
+        return self._make_request(
+            endpoint="/demographics",
+            method="POST",
+            data={"demographics": demographics}
+        )
+
+    def update_user_demographics(self, demographics: Dict[str, Any]) -> Dict[str, Any]:
+        """Update an existing demographics record for a user in the TimeBack API."""
+        sourced_id = demographics.get("sourcedId")
+        if not sourced_id:
+            raise ValueError("sourcedId is required to update demographics")
+        return self._make_request(
+            endpoint=f"/demographics/{sourced_id}",
+            method="PUT",
+            data={"demographics": demographics}
+        )
+
+    def get_demographics_record(self, demographics_id: str) -> Dict[str, Any]:
+        """Get a demographics record by sourcedId from the global demographics endpoint."""
+        return self._make_request(
+            endpoint=f"/demographics/{demographics_id}",
+            method="GET"
+        ) 

@@ -341,4 +341,41 @@ class ClassesAPI(TimeBackService):
             sort=sort,
             order_by=order_by,
             fields=fields
+        )
+    
+    def get_students_for_class(
+        self,
+        class_id: str,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        sort: Optional[str] = None,
+        order_by: Optional[str] = None,
+        filter_expr: Optional[str] = None,
+        fields: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Get all students for a specific class using the OneRoster v1.2 endpoint, with optional filtering.
+        Args:
+            class_id: The unique identifier of the class
+            filter_expr: Optional filter expression (e.g. "status='active'")
+            limit, offset, sort, order_by, fields: Standard listing params
+        Returns:
+            Dictionary containing the class's students
+        """
+        params = {}
+        if limit is not None:
+            params['limit'] = limit
+        if offset is not None:
+            params['offset'] = offset
+        if sort:
+            params['sort'] = sort
+        if order_by:
+            params['orderBy'] = order_by
+        if filter_expr:
+            params['filter'] = filter_expr
+        if fields:
+            params['fields'] = ','.join(fields)
+            
+        return self._make_request(
+            endpoint=f"/classes/{class_id}/students",
+            params=params
         ) 

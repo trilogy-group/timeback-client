@@ -9,6 +9,7 @@ and timeframes, allowing for tracking of class participation.
 
 from typing import Dict, Any, Optional, List, Union
 import logging
+import time
 from ..core.client import TimeBackService
 
 # Set up logger
@@ -215,6 +216,9 @@ class EnrollmentsAPI(TimeBackService):
             params['filter'] = filter_expr
         if fields:
             params['fields'] = ','.join(fields)
+            
+        # Add cache-busting parameter
+        params['_'] = int(time.time())
             
         return self._make_request("/enrollments", params=params)
     
