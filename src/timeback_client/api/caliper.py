@@ -125,3 +125,109 @@ class CaliperAPI(TimeBackService):
             method="GET",
             params=params
         ) 
+
+    def get_user_xp_events(
+        self,
+        user_email: str,
+        start_date: str,
+        end_date: str,
+        *,  # Force keyword args for clarity
+        limit: int = 1000,
+        offset: int = 0,
+        sensor: str = "https://app.fastmath.pro",
+        course_id: Optional[str] = None  # kept for backward-compat but not sent to API
+    ) -> List[Dict[str, Any]]:
+        """Retrieve ActivityEvent Caliper events for a user that contain XP information.
+
+        This is a convenience wrapper around ``list_events`` that applies common
+        filters used by AlphaLearn when processing FastMath XP.  It will:
+
+        1. Query the Caliper endpoint for the given user and time range.
+        2. Filter the results to ``ActivityEvent`` types only.
+        3. If ``course_id`` is provided it will further filter the events so the
+           ``object.course.id`` (the last URI fragment) matches the supplied ID.
+
+        Note: the Caliper service itself does *not* currently expose a
+        ``courseId`` query parameter, so any course filtering must be done
+        client-side.  This helper performs that filtering for you.
+
+        Args:
+            user_email:  The learner's e-mail address (maps to ``actorEmail``).
+            start_date:  ISO-8601 timestamp marking the inclusive start of the window.
+            end_date:    ISO-8601 timestamp marking the exclusive end of the window.
+            course_id:   Optional OneRoster course identifier to filter on.
+            limit:       Maximum number of events to request from the API. Defaults to 1000.
+            offset:      Pagination offset. Defaults to 0.
+            sensor:      Sensor identifier.  Defaults to the FastMath sensor URL.
+
+        Returns:
+            A list of Caliper ``ActivityEvent`` dicts after all filtering.
+        """
+        # Build query params identical to the JavaScript implementation
+        response = self.list_events(
+            limit=limit,
+            offset=offset,
+            sensor=sensor,
+            startDate=start_date,
+            endDate=end_date,
+            actorEmail=user_email
+        )
+
+        # The Caliper API sometimes nests the list under ``events`` but can also
+        # use ``data`` – handle both to be safe.
+        events: List[Dict[str, Any]] = response.get("events", response.get("data", []))  # type: ignore
+
+        if not events:
+            logger.info(
+                "No Caliper events found for %s between %s and %s", user_email, start_date, end_date
+            )
+            return []
+
+        # Filter for ActivityEvent only
+        activity_events = [e for e in events if e.get("type") == "ActivityEvent"]
+        logger.info(
+            "Retrieved %d ActivityEvent records for %s (total events: %d)",
+            len(activity_events),
+            user_email,
+            len(events),
+        )
+
+        # Optional client-side course filter – Caliper API does not support this natively
+        if course_id:
+            filtered_events: List[Dict[str, Any]] = []
+            for event in activity_events:
+                course_obj = (
+                    event.get("object", {}).get("course", {}) if isinstance(event.get("object"), dict) else {}
+                )
+                # ``id`` is usually a URI like ``https://.../courses/<course_id>`` – use last segment
+                event_course_id = course_obj.get("id", "").split("/")[-1]
+                if event_course_id == course_id:
+                    filtered_events.append(event)
+
+            logger.info(
+                "After courseId filtering (%s) %d ActivityEvent records remain",
+                course_id,
+                len(filtered_events),
+            )
+            activity_events = filtered_events
+
+        # Finally, keep only events that actually contain an XP item
+        xp_events: List[Dict[str, Any]] = []
+        for event in activity_events:
+            generated = event.get("generated", {})
+            items = generated.get("items", []) if isinstance(generated, dict) else []
+            xp_item = next((i for i in items if i.get("type") == "xpEarned"), None)
+            if xp_item is None:
+                continue
+
+            try:
+                xp_val = float(xp_item.get("value", 0))
+            except (TypeError, ValueError):
+                xp_val = 0
+
+            if xp_val > 0:
+                xp_events.append(event)
+
+        logger.info("After XP filtering %d events remain", len(xp_events))
+
+        return xp_events 

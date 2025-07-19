@@ -36,6 +36,7 @@ class AssessmentType(str, Enum):
     BRACKETING = "BRACKETING"
     MAP_GROWTH = "MAP_GROWTH"
     MAP_SCREENING = "MAP_SCREENING"
+    MAP_SCREENER = "MAP_SCREENER"  # Add missing type
     TEST_OUT = "TEST_OUT"
 
 class Reference(BaseModel):
@@ -71,11 +72,14 @@ class LearningObjectiveSet(BaseModel):
 
 class AssessmentMetadata(BaseModel):
     """Assessment metadata structure."""
+    model_config = {"extra": "allow"}  # Allow extra fields to be parsed
+    
     studentEmail: Optional[str] = Field(None, description="Student's email address")
     assignmentId: Optional[str] = Field(None, description="Assignment identifier")
     assessmentType: Optional[AssessmentType] = Field(None, description="Type of assessment")
     subject: Optional[str] = Field(None, description="Subject of the assessment")
     grade: Optional[float] = Field(None, description="Numeric grade representation")
+    testname: Optional[str] = Field(None, description="Name of the test from metadata")
 
     @field_validator('assignmentId', mode='before')
     @classmethod
