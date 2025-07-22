@@ -226,10 +226,10 @@ class UsersAPI(TimeBackService):
                 logger.info(f"Updating user {user_id} status from '{previous_status}' to 'tobedeleted'")
                 
                 # Update the user with the new status
+                # Delete via HTTP DELETE instead of PUT status update
                 return self._make_request(
                     endpoint=f"/users/{user_id}",
-                    method="PUT",
-                    data={"user": user_data}
+                    method="DELETE"
                 )
             except requests.exceptions.HTTPError as e:
                 # If user doesn't exist (404) when trying to get it, consider it already deleted
