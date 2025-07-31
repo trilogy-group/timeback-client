@@ -311,6 +311,14 @@ class UsersAPI(TimeBackService):
             params['fields'] = ','.join(fields)
             
         return self._make_request("/students", params=params)
+    
+    def decrypt_credential(self, user_id: str, credential_id: str) -> Dict[str, Any]:
+        """Decrypts a credential for a user via the TimeBack API."""
+        logger.info(f"[UsersAPI] Decrypting credential {credential_id} for user {user_id}")
+        return self._make_request(
+            endpoint=f"/users/{user_id}/credentials/{credential_id}/decrypt",
+            method="POST"
+        )
 
     def get_user_demographics(self, user_id: str, fields: Optional[List[str]] = None) -> Dict[str, Any]:
         """Get demographics for a specific user from the TimeBack API."""
