@@ -134,7 +134,7 @@ class CaliperAPI(TimeBackService):
         *,  # Force keyword args for clarity
         limit: int = 1000,
         offset: int = 0,
-        sensor: str = "https://app.fastmath.pro",
+        sensor: str = "https://app.alphamath.school",
         course_id: Optional[str] = None  # kept for backward-compat but not sent to API
     ) -> List[Dict[str, Any]]:
         """Retrieve ActivityEvent Caliper events for a user that contain XP information.

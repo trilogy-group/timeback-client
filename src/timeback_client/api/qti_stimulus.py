@@ -55,6 +55,11 @@ class StimulusAPI(TimeBackService):
             "Accept": "application/json"
         }
         
+        # Add authorization if credentials are provided
+        token = self._get_auth_token()
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        
         logger.info("Making request to %s", url)
         logger.info("Method: %s", method)
         logger.info("Data: %s", data)
