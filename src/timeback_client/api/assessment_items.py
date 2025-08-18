@@ -258,3 +258,38 @@ class AssessmentItemsAPI(TimeBackService):
         """
         endpoint = f"/assessment-items/{identifier}"
         return self._make_request(endpoint, method="DELETE") 
+
+    def process_response(
+        self,
+        identifier: str,
+        response: Union[str, Dict[str, Any]],
+        response_identifier: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Process a candidate response for an assessment item.
+        
+        This calls the QTI API endpoint:
+        POST /assessment-items/{identifier}/process-response
+        
+        Args:
+            identifier: The assessment item identifier
+            response: The candidate response payload (raw string or structured object)
+        
+        Returns:
+            Dict[str, Any]: The processing result from the QTI API
+        
+        Raises:
+            requests.exceptions.HTTPError: If the API request fails
+        """
+        endpoint = f"/assessment-items/{identifier}/process-response"
+        data: Dict[str, Any] = {
+            # The body 'identifier' refers to the responseDeclaration identifier, not the item id
+            "identifier": response_identifier or "RESPONSE",
+            "response": response,
+        }
+
+        logger.info(
+            "Processing response for assessment item %s via endpoint %s",
+            identifier,
+            endpoint,
+        )
+        return self._make_request(endpoint, method="POST", data=data)
