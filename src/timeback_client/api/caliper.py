@@ -134,7 +134,7 @@ class CaliperAPI(TimeBackService):
         *,  # Force keyword args for clarity
         limit: int = 1000,
         offset: int = 0,
-        sensor: str = "https://app.alphamath.school",
+        sensor: Optional[str] = None,  # Remove hardcoded sensor - let it be optional
         course_id: Optional[str] = None  # kept for backward-compat but not sent to API
     ) -> List[Dict[str, Any]]:
         """Retrieve ActivityEvent Caliper events for a user that contain XP information.
@@ -158,7 +158,7 @@ class CaliperAPI(TimeBackService):
             course_id:   Optional OneRoster course identifier to filter on.
             limit:       Maximum number of events to request from the API. Defaults to 1000.
             offset:      Pagination offset. Defaults to 0.
-            sensor:      Sensor identifier.  Defaults to the FastMath sensor URL.
+            sensor:      Optional sensor identifier. If None, will not filter by sensor.
 
         Returns:
             A list of Caliper ``ActivityEvent`` dicts after all filtering.
