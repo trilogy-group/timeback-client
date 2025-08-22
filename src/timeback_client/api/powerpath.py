@@ -700,4 +700,103 @@ class PowerPathAPI(TimeBackService):
             endpoint="/createExternalTestOut",
             method="POST",
             data=data
+        )
+
+    def get_all_placement_tests(self, student: str, subject: str) -> Dict[str, Any]:
+        """Get all placement tests for a student in a specific subject.
+        
+        This endpoint fetches placement test data from the PowerPath system,
+        including component resources, assessment results, and metadata.
+        
+        Args:
+            student: The sourcedId of the student
+            subject: The subject name (must be one of: Reading, Language, Vocabulary, 
+                    Social Studies, Writing, Science, FastMath, Math)
+            
+        Returns:
+            Dict containing:
+            - success: Boolean indicating success
+            - placementTests: List of placement test objects with structure:
+                - component_resources: ComponentResource details
+                - resources: Resource metadata
+                - resources_metadata: ResourceMetadata with grades, subject, toolProvider
+                - assessment_line_items: Assessment line item data (nullable)
+                - assessment_results: List of AssessmentResult objects (nullable)
+                
+        Raises:
+            requests.exceptions.HTTPError: If student/subject not found (404) or other API error
+            
+        Example usage:
+            >>> client = TimeBackClient()
+            >>> result = client.powerpath.get_all_placement_tests(
+            ...     student="student-123",
+            ...     subject="Math"
+            ... )
+            >>> print(result)
+            {
+                "success": true,
+                "placementTests": [
+                    {
+                        "component_resources": {
+                            "sourcedId": "comp-resource-123",
+                            "title": "Grade 5 Math Placement Test"
+                        },
+                        "resources": {},
+                        "resources_metadata": {
+                            "grades": ["5"],
+                            "subject": "Math",
+                            "toolProvider": null
+                        },
+                        "assessment_line_items": null,
+                        "assessment_results": [
+                            {
+                                "sourcedId": "result-456",
+                                "score": 85,
+                                "scoreDate": "2024-01-15T10:30:00Z",
+                                "scoreStatus": "completed",
+                                "inProgress": false,
+                                "incomplete": false
+                            }
+                        ]
+                    }
+                ]
+            }
+        """
+        logger.info(f"Fetching placement tests for student {student} in subject {subject}")
+        
+        params = {
+            "student": student,
+            "subject": subject
+        }
+        
+        return self._make_request(
+            endpoint="/placement/getAllPlacementTests",
+            method="GET",
+            params=params
         ) 
+
+    def get_next_placement_test(self, student: str, subject: str) -> Dict[str, Any]:
+        """Get next placement test for a student in a subject.
+        
+        Returns an object with keys:
+        - exhaustedTests: bool
+        - gradeLevel: str | None
+        - lesson: str | None
+        - onboarded: bool
+        - availableTests: int
+
+        Raises:
+            requests.exceptions.HTTPError on API errors
+        """
+        logger.info(f"Fetching next placement test for student {student} in subject {subject}")
+
+        params = {
+            "student": student,
+            "subject": subject,
+        }
+
+        return self._make_request(
+            endpoint="/placement/getNextPlacementTest",
+            method="GET",
+            params=params,
+        )

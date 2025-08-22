@@ -34,6 +34,7 @@ class ScoreStatus(str, Enum):
 class AssessmentType(str, Enum):
     """Assessment type values for metadata."""
     BRACKETING = "BRACKETING"
+    MANUAL = "MANUAL"  # Manual placement tests
     MAP_GROWTH = "MAP_GROWTH"
     MAP_SCREENING = "MAP_SCREENING"
     MAP_SCREENER = "MAP_SCREENER"  # Add missing type
