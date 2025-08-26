@@ -424,8 +424,9 @@ class PowerPathAPI(TimeBackService):
         self,
         student_id: str,
         question_id: str,
-        response: str | List[str],
-        lesson_id: str
+        response: Optional[str | List[str]] = None,
+        lesson_id: str = '',
+        responses: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Update a student's response to a question and get the updated PowerPath score.
         
@@ -433,6 +434,7 @@ class PowerPathAPI(TimeBackService):
             student_id: The sourcedId of the student
             question_id: The sourcedId of the ComponentResource representing the question
             response: The student's response (string or list of strings for multiple choice)
+            responses: Optional mapping for multi-input items: { responseIdentifier: value }
             lesson_id: The sourcedId of the Component representing the PowerPath100 lesson
             
         Returns:
@@ -442,12 +444,18 @@ class PowerPathAPI(TimeBackService):
             - questionResult: Assessment result for debugging
             - quizResult: Assessment result for debugging
         """
-        data = {
+        # Build request data. Prefer new 'responses' schema when provided.
+        data: Dict[str, Any] = {
             "student": student_id,
             "question": question_id,
-            "response": response,
-            "lesson": lesson_id
+            "lesson": lesson_id,
         }
+        if responses is not None:
+            data["responses"] = responses
+        elif response is not None:
+            data["response"] = response
+        else:
+            raise ValueError("Either 'responses' or 'response' must be provided")
         
         return self._make_request(
             endpoint="/updateStudentQuestionResponse",
