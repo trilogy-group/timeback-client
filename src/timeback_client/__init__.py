@@ -3,7 +3,7 @@
 This package provides a Python client for the TimeBack API, which implements the OneRoster 1.2 specification.
 """
 
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 
 from .core.client import TimeBackClient, RosteringService, GradebookService, ResourcesService, QTIService
 
