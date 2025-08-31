@@ -808,3 +808,32 @@ class PowerPathAPI(TimeBackService):
             method="GET",
             params=params,
         )
+
+    def get_current_level(self, student: str, subject: str) -> Dict[str, Any]:
+        """Get current grade level for a student in a subject.
+        
+        Returns an object with keys:
+        - gradeLevel: str | None - The definitive current grade level
+        - onboarded: bool - Whether student is onboarded at this level
+        - availableTests: int - Number of tests available
+
+        Args:
+            student: The sourcedId of the student
+            subject: The subject name (must be one of: Reading, Language, Vocabulary, 
+                    Social Studies, Writing, Science, FastMath, Math)
+
+        Raises:
+            requests.exceptions.HTTPError on API errors
+        """
+        logger.info(f"Fetching current level for student {student} in subject {subject}")
+
+        params = {
+            "student": student,
+            "subject": subject,
+        }
+
+        return self._make_request(
+            endpoint="/placement/getCurrentLevel",
+            method="GET",
+            params=params,
+        )
