@@ -18,4 +18,5 @@ __all__ = [
     "component_resources",  # Component resource management API
     "students",
     "caliper",  # Caliper events API
+    "subject_tracks",  # EduBridge subject tracks API
 ]
