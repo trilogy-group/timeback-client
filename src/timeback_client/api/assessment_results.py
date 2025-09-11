@@ -33,9 +33,11 @@ class AssessmentResultsAPI(TimeBackService):
         component_id: Optional[str] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-        filter_expr: Optional[str] = None
+        filter_expr: Optional[str] = None,
+        sort: Optional[str] = None,
+        orderBy: Optional[str] = None
     ) -> AssessmentResultsResponse:
-        """Get assessment results with optional filtering.
+        """Get assessment results with optional filtering and sorting.
         
         Args:
             student_id: Filter results by student ID
@@ -43,6 +45,8 @@ class AssessmentResultsAPI(TimeBackService):
             limit: Maximum number of results to return
             offset: Number of results to skip for pagination
             filter_expr: Optional filter expression (e.g. "status='active'")
+            sort: Field to sort by (e.g. "scoreDate", "dateLastModified")
+            orderBy: Sort order, either "asc" or "desc"
             
         Returns:
             AssessmentResultsResponse containing assessment results data
@@ -64,6 +68,10 @@ class AssessmentResultsAPI(TimeBackService):
             params["offset"] = offset
         if filter_expr is not None:
             params["filter"] = filter_expr
+        if sort is not None:
+            params["sort"] = sort
+        if orderBy is not None:
+            params["orderBy"] = orderBy
             
         response_data = self._make_request(endpoint, params=params)
         return AssessmentResultsResponse(**response_data)
@@ -101,7 +109,7 @@ class AssessmentResultsAPI(TimeBackService):
         """
         endpoint = "/assessmentResults"
         data = assessment_result.to_create_dict()
-        return self._make_request(endpoint, method="POST", json=data)
+        return self._make_request(endpoint, method="POST", data=data)
     
     def update_assessment_result(self, result_id: str, assessment_result: AssessmentResult) -> Dict[str, Any]:
         """Update an existing assessment result.
@@ -118,7 +126,7 @@ class AssessmentResultsAPI(TimeBackService):
         """
         endpoint = f"/assessmentResults/{result_id}"
         data = assessment_result.to_update_dict()
-        return self._make_request(endpoint, method="PUT", json=data)
+        return self._make_request(endpoint, method="PUT", data=data)
     
     def delete_assessment_result(self, result_id: str) -> Dict[str, Any]:
         """Delete an assessment result (sets status to tobedeleted).
