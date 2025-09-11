@@ -354,4 +354,29 @@ class UsersAPI(TimeBackService):
         return self._make_request(
             endpoint=f"/demographics/{demographics_id}",
             method="GET"
+        )
+
+
+    def create_user_credentials(self, user_id: str, application_name: str, credentials: Dict[str, str]) -> Dict[str, Any]:
+        """Create credentials for a user in a specific application.
+        
+        Args:
+            user_id: The user's sourcedId
+            application_name: The name of the application
+            credentials: Dict containing username and password
+            
+        Returns:
+            The API response containing the created credentials
+            
+        Raises:
+            requests.exceptions.HTTPError: If the API request fails
+        """
+        logger.info(f"[UsersAPI] Creating credentials for user {user_id} in application {application_name}")
+        return self._make_request(
+            endpoint=f"/users/{user_id}/credentials",
+            method="POST",
+            data={
+                "applicationName": application_name,
+                "credentials": credentials
+            }
         ) 

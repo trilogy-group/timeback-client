@@ -19,4 +19,5 @@ __all__ = [
     "students",
     "caliper",  # Caliper events API
     "subject_tracks",  # EduBridge subject tracks API
+    "applications",  # EduBridge applications API
 ]
