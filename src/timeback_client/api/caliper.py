@@ -78,7 +78,11 @@ class CaliperAPI(TimeBackService):
         startDate: Optional[str] = None,
         endDate: Optional[str] = None,
         actorId: Optional[str] = None,
-        actorEmail: Optional[str] = None
+        actorEmail: Optional[str] = None,
+        # Optional sorting and timezone hints (forwarded if API supports; otherwise ignored upstream)
+        sort: Optional[str] = None,
+        orderBy: Optional[str] = None,
+        timezone: Optional[str] = None,
     ) -> Dict[str, Any]:
         """List Caliper events with filtering and pagination.
         
@@ -117,6 +121,13 @@ class CaliperAPI(TimeBackService):
             params['actorId'] = actorId
         if actorEmail:
             params['actorEmail'] = actorEmail
+        # Pass-through optional params; harmless if upstream ignores them
+        if sort:
+            params['sort'] = sort
+        if orderBy:
+            params['orderBy'] = orderBy
+        if timezone:
+            params['timezone'] = timezone
             
         logger.info(f"Listing Caliper events with params: {params}")
         
