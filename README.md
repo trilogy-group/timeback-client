@@ -191,6 +191,43 @@ powerpath = client.powerpath
 syllabus = powerpath.get_course_syllabus("course-id")
 ```
 
+### PowerPath Test Assignments
+
+Endpoints exposed by this client (thin wrappers, no client-side data manipulation):
+
+- POST `/powerpath/test-assignments`: Create an individual test assignment
+- PUT `/powerpath/test-assignments/{id}`: Update an individual test assignment
+- GET `/powerpath/test-assignments/{id}`: Get a test assignment
+- DELETE `/powerpath/test-assignments/{id}`: Delete (soft-delete) a test assignment
+- GET `/powerpath/test-assignments`: List test assignments for students (query: `student`, `status`, `subject`, `grade`, `page`, `limit`)
+- GET `/powerpath/test-assignments/admin`: List test assignments for admins (same optional filters)
+
+Example usage:
+
+```python
+from timeback_client import TimeBackClient
+
+client = TimeBackClient()
+
+# List test assignments for a student
+assignments = client.powerpath.list_test_assignments(
+    student="student-id",
+    status="active",    # optional
+    subject="Math",     # optional
+    grade="5",          # optional
+    page=1,              # optional
+    limit=25             # optional
+)
+
+# Create a test assignment
+created = client.powerpath.create_test_assignment({
+    "student": "student-id",
+    "subject": "Math",
+    "grade": "5",
+    # ... additional fields as required by the API ...
+})
+```
+
 ## API Structure
 
 The client follows the OneRoster 1.2 API structure:
