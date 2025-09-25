@@ -81,7 +81,7 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ## Version History
 
-### v1.4.3
+### v1.4.4
 - Added PowerPath Test Assignments endpoints:
   - POST /powerpath/test-assignments
   - PUT /powerpath/test-assignments/{id}
