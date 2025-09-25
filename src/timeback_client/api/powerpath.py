@@ -837,3 +837,199 @@ class PowerPathAPI(TimeBackService):
             method="GET",
             params=params,
         )
+
+    # ------------------------------------------------------------
+    # Test Assignments endpoints
+    # ------------------------------------------------------------
+    def create_test_assignment(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create an individual test assignment.
+        
+        Args:
+            data: Request body passed through unchanged to the API.
+        
+        Returns:
+            Dict: The JSON response from the API.
+        
+        Raises:
+            requests.exceptions.HTTPError: For HTTP errors returned by the API.
+        
+        Example:
+            >>> from timeback_client import TimeBackClient
+            >>> client = TimeBackClient()
+            >>> resp = client.powerpath.create_test_assignment({"student": "stu-1", "subject": "Math", "grade": "5"})
+        """
+        logger.info("Creating test assignment")
+        return self._make_request(
+            endpoint="/test-assignments",
+            method="POST",
+            data=data,
+        )
+
+    def update_test_assignment(self, assignment_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update an individual test assignment by ID.
+        
+        Args:
+            assignment_id: The test assignment ID.
+            data: Request body passed through unchanged to the API.
+        
+        Returns:
+            Dict: The JSON response from the API.
+        
+        Raises:
+            requests.exceptions.HTTPError: For HTTP errors returned by the API.
+        
+        Example:
+            >>> from timeback_client import TimeBackClient
+            >>> client = TimeBackClient()
+            >>> resp = client.powerpath.update_test_assignment("assignment-123", {"name": "Math K"})
+        """
+        logger.info(f"Updating test assignment {assignment_id}")
+        return self._make_request(
+            endpoint=f"/test-assignments/{assignment_id}",
+            method="PUT",
+            data=data,
+        )
+
+    def get_test_assignment(self, assignment_id: str) -> Dict[str, Any]:
+        """Get an individual test assignment by ID.
+        
+        Args:
+            assignment_id: The test assignment ID.
+        
+        Returns:
+            Dict: The JSON response from the API.
+        
+        Raises:
+            requests.exceptions.HTTPError: For HTTP errors returned by the API.
+        
+        Example:
+            >>> from timeback_client import TimeBackClient
+            >>> client = TimeBackClient()
+            >>> resp = client.powerpath.get_test_assignment("assignment-123")
+        """
+        logger.info(f"Fetching test assignment {assignment_id}")
+        return self._make_request(
+            endpoint=f"/test-assignments/{assignment_id}",
+            method="GET",
+        )
+
+    def delete_test_assignment(self, assignment_id: str) -> Dict[str, Any]:
+        """Delete (soft-delete) an individual test assignment by ID.
+        
+        Args:
+            assignment_id: The test assignment ID.
+        
+        Returns:
+            Dict: The JSON response from the API.
+        
+        Raises:
+            requests.exceptions.HTTPError: For HTTP errors returned by the API.
+        
+        Example:
+            >>> from timeback_client import TimeBackClient
+            >>> client = TimeBackClient()
+            >>> resp = client.powerpath.delete_test_assignment("assignment-123")
+        """
+        logger.info(f"Deleting test assignment {assignment_id}")
+        return self._make_request(
+            endpoint=f"/test-assignments/{assignment_id}",
+            method="DELETE",
+        )
+
+    def list_test_assignments(
+        self,
+        student: str,
+        status: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        page: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """List test assignments for a student.
+        
+        Args:
+            student: Student ID to filter.
+            status: Optional assignment status filter.
+            subject: Optional subject filter.
+            grade: Optional grade filter.
+            page: Optional page number.
+            limit: Optional page size.
+        
+        Returns:
+            Dict: The JSON response from the API.
+        
+        Raises:
+            requests.exceptions.HTTPError: For HTTP errors returned by the API.
+        
+        Example:
+            >>> from timeback_client import TimeBackClient
+            >>> client = TimeBackClient()
+            >>> resp = client.powerpath.list_test_assignments(student="stu-1", subject="Math", grade="5")
+        """
+        logger.info(f"Listing test assignments for student {student}")
+        params: Dict[str, Any] = {"student": student}
+        if status is not None:
+            params["status"] = status
+        if subject is not None:
+            params["subject"] = subject
+        if grade is not None:
+            params["grade"] = grade
+        if page is not None:
+            params["page"] = page
+        if limit is not None:
+            params["limit"] = limit
+        return self._make_request(
+            endpoint="/test-assignments",
+            method="GET",
+            params=params,
+        )
+
+    def list_test_assignments_admin(
+        self,
+        student: Optional[str] = None,
+        status: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        page: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """List test assignments for admins.
+        
+        Args:
+            student: Optional student ID to filter.
+            status: Optional assignment status filter.
+            subject: Optional subject filter.
+            grade: Optional grade filter.
+            page: Optional page number.
+            limit: Optional page size.
+        
+        Returns:
+            Dict: The JSON response from the API.
+        
+        Raises:
+            requests.exceptions.HTTPError: For HTTP errors returned by the API.
+        
+        Example:
+            >>> from timeback_client import TimeBackClient
+            >>> client = TimeBackClient()
+            >>> resp = client.powerpath.list_test_assignments_admin(status="completed")
+        """
+        logger.info("Listing test assignments for admin")
+        params: Dict[str, Any] = {}
+        if student is not None:
+            params["student"] = student
+        if status is not None:
+            params["status"] = status
+        if subject is not None:
+            params["subject"] = subject
+        if grade is not None:
+            params["grade"] = grade
+        if page is not None:
+            params["page"] = page
+        if limit is not None:
+            params["limit"] = limit
+        return self._make_request(
+            endpoint="/test-assignments/admin",
+            method="GET",
+            params=params if params else None,
+        )

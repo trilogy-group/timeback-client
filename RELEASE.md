@@ -81,6 +81,17 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ## Version History
 
+### v1.4.4
+- Added PowerPath Test Assignments endpoints:
+  - POST /powerpath/test-assignments
+  - PUT /powerpath/test-assignments/{id}
+  - GET /powerpath/test-assignments/{id}
+  - DELETE /powerpath/test-assignments/{id}
+  - GET /powerpath/test-assignments
+  - GET /powerpath/test-assignments/admin
+- Added unit tests for new endpoints (no network I/O)
+- Updated README with Test Assignments documentation and examples
+
 ### v0.2.13
 - Added submit quiz endpoint
 
