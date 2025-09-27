@@ -262,30 +262,50 @@ class AssessmentItemsAPI(TimeBackService):
     def process_response(
         self,
         identifier: str,
-        response: Union[str, Dict[str, Any]],
+        response: Optional[Union[str, Dict[str, Any]]] = None,
         response_identifier: Optional[str] = None,
+        responses: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Process a candidate response for an assessment item.
         
         This calls the QTI API endpoint:
-        POST /assessment-items/{identifier}/process-response
+        - v1 (single response): POST /assessment-items/{identifier}/process-response
+        - v2 (multiple responses): POST /assessment-items/{identifier}/process-response?v2
         
         Args:
             identifier: The assessment item identifier
-            response: The candidate response payload (raw string or structured object)
+            response: Single response payload (raw string or structured object)
+            response_identifier: ResponseDeclaration identifier for single-response (default: "RESPONSE")
+            responses: Mapping for multi-input items when using v2, e.g. { responseIdentifier: value }
+                See `tests/test_assessment_items.py` for usage of QTI models.
         
         Returns:
             Dict[str, Any]: The processing result from the QTI API
         
         Raises:
             requests.exceptions.HTTPError: If the API request fails
+            ValueError: If neither 'responses' nor 'response' is provided
+        
+        Steps:
+            1) Build endpoint; append "?v2" when using the multi-response 'responses' payload.
+            2) Build request body: {identifier, response} for v1; {responses} for v2.
+            3) POST to QTI API via _make_request.
         """
-        endpoint = f"/assessment-items/{identifier}/process-response"
-        data: Dict[str, Any] = {
-            # The body 'identifier' refers to the responseDeclaration identifier, not the item id
-            "identifier": response_identifier or "RESPONSE",
-            "response": response,
-        }
+        # Validate inputs and decide versioned behavior
+        if responses is not None:
+            # v2 path: multiple responses, use query flag and 'responses' body
+            endpoint = f"/assessment-items/{identifier}/process-response?v2"
+            data: Dict[str, Any] = {"responses": responses}
+        elif response is not None:
+            # v1 path: single response, include response declaration identifier
+            endpoint = f"/assessment-items/{identifier}/process-response"
+            data = {
+                # The body 'identifier' refers to the responseDeclaration identifier, not the item id
+                "identifier": response_identifier or "RESPONSE",
+                "response": response,
+            }
+        else:
+            raise ValueError("Either 'responses' or 'response' must be provided")
 
         logger.info(
             "Processing response for assessment item %s via endpoint %s",
