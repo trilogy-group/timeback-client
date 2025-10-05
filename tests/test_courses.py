@@ -17,7 +17,7 @@ from timeback_client.models.course import Course
 from timeback_client.api.courses import CoursesAPI
 import requests
 
-STAGING_URL = "https://staging.alpha-1edtech.com"
+STAGING_URL = "https://staging.alpha-1edtech.ai"
 TEST_ORG_ID = "f47ac10b-58cc-4372-a567-0e02b2c3d479"  # Default test org ID
 
 # Configure logging

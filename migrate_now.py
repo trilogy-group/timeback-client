@@ -17,8 +17,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # API URLs
-STAGING_URL = "https://staging.alpha-1edtech.com"
-PRODUCTION_URL = "https://alpha-1edtech.com"
+STAGING_URL = "https://staging.alpha-1edtech.ai"
+PRODUCTION_URL = "https://alpha-1edtech.ai"
 
 def get_user_by_id(client: TimeBackClient, sourcedId: str) -> Dict[str, Any]:
     """Get a specific user from the API.

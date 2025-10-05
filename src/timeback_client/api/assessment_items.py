@@ -174,7 +174,7 @@ class AssessmentItemsAPI(TimeBackService):
             logger.info(f"Extracted item ID {item_id} from URL {identifier}")
             
             # If the URL is from the same QTI API, use the local endpoint
-            if any(domain in identifier for domain in ['qti.alpha-1edtech.com', 'alpha-qti-api']):
+            if any(domain in identifier for domain in ['qti.alpha-1edtech.ai', 'alpha-qti-api']):
                 endpoint = f"/assessment-items/{item_id}"
                 return self._make_request(endpoint)
             else:

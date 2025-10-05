@@ -233,7 +233,7 @@ created = client.powerpath.create_test_assignment({
 The client follows the OneRoster 1.2 API structure:
 
 ```
-Base URL (http://staging.alpha-1edtech.com/)
+Base URL (http://staging.alpha-1edtech.ai/)
 └── /ims/oneroster
     ├── /rostering/v1p2
     │   ├── /users
@@ -340,8 +340,8 @@ client = TimeBackClient(
 
 # Custom API URLs (advanced usage)
 client = TimeBackClient(
-    api_url="http://staging.alpha-1edtech.com/",
-    qti_api_url="https://qti.alpha-1edtech.com/api",
+    api_url="http://staging.alpha-1edtech.ai/",
+    qti_api_url="https://qti.alpha-1edtech.ai/api",
     client_id="your-client-id",
     client_secret="your-client-secret"
 )

@@ -19,7 +19,7 @@ from timeback_client.api.powerpath import PowerPathAPI
 logging.basicConfig(level=logging.INFO)
 
 # Use a base URL constant for consistency with other test modules
-STAGING_URL = "https://staging.alpha-1edtech.com"
+STAGING_URL = "https://staging.alpha-1edtech.ai"
 
 
 def _mock_make_request(expected: Dict[str, Any]):

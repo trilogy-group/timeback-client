@@ -61,7 +61,7 @@ pytest tests/application/test_course_application.py::test_application_create_cou
 
 All tests run against the staging API by default:
 
-- OneRoster API: `http://staging.alpha-1edtech.com`
+- OneRoster API: `http://staging.alpha-1edtech.ai`
 - QTI API: `https://alpha-qti-api-43487de62e73.herokuapp.com/api`
 
 No authentication is required for the staging API.

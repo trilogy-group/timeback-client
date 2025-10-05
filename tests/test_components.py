@@ -11,7 +11,7 @@ import uuid
 from timeback_client.api.components import ComponentsAPI
 from timeback_client.api.courses import CoursesAPI
 
-STAGING_URL = "https://staging.alpha-1edtech.com"
+STAGING_URL = "https://staging.alpha-1edtech.ai"
 TEST_ORG_ID = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
 
 # Configure logging

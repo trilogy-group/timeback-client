@@ -9,7 +9,7 @@ import uuid
 from timeback_client import TimeBackClient
 
 # Constants
-STAGING_URL = "http://staging.alpha-1edtech.com"  # Use staging for tests
+STAGING_URL = "http://staging.alpha-1edtech.ai"  # Use staging for tests
 TEST_ORG_ID = "f47ac10b-58cc-4372-a567-0e02b2c3d479"  # Default test org ID
 
 @pytest.mark.integration

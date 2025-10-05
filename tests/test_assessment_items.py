@@ -24,7 +24,7 @@ import requests
 logging.basicConfig(level=logging.INFO)
 
 # URLs for API testing
-ONEROSTER_STAGING_URL = "http://staging.alpha-1edtech.com"
+ONEROSTER_STAGING_URL = "http://staging.alpha-1edtech.ai"
 QTI_STAGING_URL = "https://alpha-qti-api-43487de62e73.herokuapp.com/api"
 
 def test_qti_service_initialization():

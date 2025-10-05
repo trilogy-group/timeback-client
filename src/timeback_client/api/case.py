@@ -22,7 +22,7 @@ class CaseAPI(TimeBackService):
     and academic standards data between systems.
     
     Example:
-        >>> case_api = CaseAPI("https://api.staging.alpha-1edtech.com/")
+        >>> case_api = CaseAPI("https://api.staging.alpha-1edtech.ai/")
         >>> documents = case_api.get_all_cf_documents()
         >>> document = case_api.get_cf_document("document-id")
         >>> package = case_api.get_cf_package("document-id")

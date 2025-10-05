@@ -34,7 +34,7 @@ class ApplicationsAPI(TimeBackService):
         """Initialize the Applications API client.
 
         Args:
-            base_url: Base API URL, e.g., https://api.alpha-1edtech.com/
+            base_url: Base API URL, e.g., https://api.alpha-1edtech.ai/
             client_id: OAuth2 client ID (optional)
             client_secret: OAuth2 client secret (optional)
         """

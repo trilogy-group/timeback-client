@@ -158,7 +158,7 @@ class StimulusAPI(TimeBackService):
             stim_id = parts[-1]
             logger.info(f"Extracted stimulus ID {stim_id} from URL {identifier}")
             
-            if any(domain in identifier for domain in ['qti.alpha-1edtech.com', 'alpha-qti-api']):
+            if any(domain in identifier for domain in ['qti.alpha-1edtech.ai', 'alpha-qti-api']):
                 endpoint = f"/stimuli/{stim_id}"
                 return self._make_request(endpoint)
             else:

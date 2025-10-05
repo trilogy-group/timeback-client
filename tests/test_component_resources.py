@@ -14,7 +14,7 @@ from timeback_client.api.component_resources import ComponentResourcesAPI
 from timeback_client.models.component_resource import ComponentResource
 from timeback_client.api.resources import ResourcesAPI
 
-STAGING_URL = "https://staging.alpha-1edtech.com"
+STAGING_URL = "https://staging.alpha-1edtech.ai"
 TEST_ORG_ID = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
 
 # Configure logging

@@ -9,7 +9,7 @@ The client is organized into three main services:
 
 Example:
     >>> from timeback_client import TimeBackClient
-    >>> client = TimeBackClient("http://staging.alpha-1edtech.com/")
+    >>> client = TimeBackClient("http://staging.alpha-1edtech.ai/")
     >>> users = client.rostering.users.list_users(limit=10)
     >>> user = client.rostering.users.get_user("user-id")
 """
@@ -33,7 +33,7 @@ class TimeBackService:
     including URL construction and request handling.
     
     Args:
-        base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
+        base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.ai/)
         service: The service name (rostering, gradebook, or resources)
         client_id: OAuth2 client ID for authentication
         client_secret: OAuth2 client secret for authentication
@@ -227,7 +227,7 @@ class RosteringService(TimeBackService):
     specialized API classes for each entity type.
     
     Example:
-        >>> client = TimeBackClient("http://staging.alpha-1edtech.com/")
+        >>> client = TimeBackClient("http://staging.alpha-1edtech.ai/")
         >>> rostering = client.rostering
         >>> users = rostering.users.list_users(limit=10)
         >>> orgs = rostering.orgs.list_orgs()  # When implemented
@@ -237,7 +237,7 @@ class RosteringService(TimeBackService):
         """Initialize rostering service.
         
         Args:
-            base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
+            base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.ai/)
             client_id: OAuth2 client ID for authentication
             client_secret: OAuth2 client secret for authentication
         """
@@ -332,7 +332,7 @@ class GradebookService(TimeBackService):
         """Initialize gradebook service.
         
         Args:
-            base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
+            base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.ai/)
             client_id: OAuth2 client ID for authentication
             client_secret: OAuth2 client secret for authentication
         """
@@ -398,14 +398,14 @@ class QTIService(TimeBackService):
     """
     
     # Default QTI URLs - make sure they include /api
-    DEFAULT_QTI_STAGING_URL = "https://qti-staging.alpha-1edtech.com/api"
-    DEFAULT_QTI_PRODUCTION_URL = "https://qti.alpha-1edtech.com/api"
+    DEFAULT_QTI_STAGING_URL = "https://qti-staging.alpha-1edtech.ai/api"
+    DEFAULT_QTI_PRODUCTION_URL = "https://qti.alpha-1edtech.ai/api"
     
     def __init__(self, base_url: str, qti_api_url: str, client_id: Optional[str] = None, client_secret: Optional[str] = None):
         """Initialize QTI service.
         
         Args:
-            base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.com/)
+            base_url: The base URL of the TimeBack API (e.g., http://staging.alpha-1edtech.ai/)
             qti_api_url: The base URL of the QTI API. If not provided, uses the default staging URL.
             client_id: OAuth2 client ID for authentication
             client_secret: OAuth2 client secret for authentication
@@ -541,7 +541,7 @@ class CaliperService(TimeBackService):
         """Initialize Caliper service.
         
         Args:
-            caliper_api_url: The base URL of the Caliper API (e.g., https://caliper.alpha-1edtech.com)
+            caliper_api_url: The base URL of the Caliper API (e.g., https://caliper.alpha-1edtech.ai)
             client_id: OAuth2 client ID for authentication
             client_secret: OAuth2 client secret for authentication
         """
@@ -600,10 +600,10 @@ class TimeBackClient:
     """
     
     # Update default URLs
-    DEFAULT_STAGING_URL = "https://api.staging.alpha-1edtech.com/"
-    DEFAULT_PRODUCTION_URL = "https://api.alpha-1edtech.com/"  # Updated to use api subdomain
-    DEFAULT_CALIPER_STAGING_URL = "https://caliper-staging.alpha-1edtech.com"
-    DEFAULT_CALIPER_PRODUCTION_URL = "https://caliper.alpha-1edtech.com"
+    DEFAULT_STAGING_URL = "https://api.staging.alpha-1edtech.ai/"
+    DEFAULT_PRODUCTION_URL = "https://api.alpha-1edtech.ai/"  # Updated to use api subdomain
+    DEFAULT_CALIPER_STAGING_URL = "https://caliper-staging.alpha-1edtech.ai"
+    DEFAULT_CALIPER_PRODUCTION_URL = "https://caliper.alpha-1edtech.ai"
     
     def __init__(
         self,

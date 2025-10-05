@@ -162,7 +162,7 @@ info:
 
 
     [Timeback
-    Docs](https://caliper.alpha-1edtech.com/scalar?api=timeback-events-api)
+    Docs](https://caliper.alpha-1edtech.ai/scalar?api=timeback-events-api)
 
 
     ---
@@ -206,7 +206,7 @@ info:
     Reach out to the platform team to get a client/secret pair for your
     application.
 servers:
-  - url: https://caliper.alpha-1edtech.com
+  - url: https://caliper.alpha-1edtech.ai
     description: Caliper API
 tags:
   - name: Caliper Events
@@ -5719,7 +5719,7 @@ components:
           description: The course where the event was recorded
           example:
             id: >-
-              https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/courses/<courseSourcedId>
+              https://api.alpha-1edtech.ai/ims/oneroster/rostering/v1p2/courses/<courseSourcedId>
             name: Example Course
         activity:
           type: object
@@ -5739,7 +5739,7 @@ components:
           description: The activity where the event was recorded
           example:
             id: >-
-              https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/courses/components/<componentSourcedId>
+              https://api.alpha-1edtech.ai/ims/oneroster/rostering/v1p2/courses/components/<componentSourcedId>
             name: Example Activity
       required:
         - id
@@ -5767,7 +5767,7 @@ components:
           format: uri
           description: The unique identifier for the collection
           example: >-
-            https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/collections/1
+            https://api.alpha-1edtech.ai/ims/oneroster/rostering/v1p2/collections/1
         type:
           type: string
           const: TimebackActivityMetricsCollection
@@ -5839,7 +5839,7 @@ components:
           format: uri
           description: The unique identifier for the actor
           example: >-
-            https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/users/<userId>
+            https://api.alpha-1edtech.ai/ims/oneroster/rostering/v1p2/users/<userId>
         type:
           type: string
           const: TimebackUser
@@ -5883,7 +5883,7 @@ components:
 
 
         Example:
-        https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/users/123
+        https://api.alpha-1edtech.ai/ims/oneroster/rostering/v1p2/users/123
     TrueFalseResponse:
       type: object
       properties:
