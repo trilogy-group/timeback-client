@@ -1,0 +1,1532 @@
+openapi: 3.1.0
+info:
+  title: Timeback Events API
+  version: 1.0.0
+  description: >-
+    # Documentation
+
+
+    ## Overview
+
+
+    The Timeback Profile extends the IMS Caliper Analytics® specification to
+    enable precise tracking of student activities and time spent metrics in
+    educational platforms. This profile provides specialized event types that
+    capture educational engagement data in a format optimized for the Timeback
+    platform.
+
+
+    ## Why Use Timeback Profile?
+
+
+    While the standard Caliper Analytics specification offers many generic event
+    types, the Timeback Profile provides:
+
+
+    - Event types specifically designed for the context of the Timeback platform
+    APIs
+
+    - Simplified structure for common educational platform analytics needs
+
+    - Direct support for XP/rewards, time tracking, question metrics and others
+
+    - Optimized integration with Timeback platform analytics (ETL)
+
+
+    # Event Types
+
+
+    The Timeback Profile currently supports two primary event types:
+
+
+    ## 1. ActivityEvent
+
+
+    Used to record student interaction with educational activities, including
+    total questions answered, correct questions and so on...
+
+
+    ### Example
+
+
+    ```json
+
+    {
+      "id": "urn:uuid:c51570e4-f8ed-4c18-bb3a-dfe51b2cc594",
+      "eventTime": "2024-04-24T14:12:00.000Z",
+      "profile": "TimebackProfile",
+      "type": "ActivityEvent",
+      "actor": {
+        "id": "https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/users/<userId>",
+        "type": "TimebackUser",
+        "email": "student.email@example.com"
+      },
+      "action": "Completed",
+      "object": {
+        "id": "https://your-app-url.com/ims/activity/context",
+        "type": "TimebackActivityContext",
+        "subject": "Reading",
+        "app": {
+          "name": "PowerPath UI"
+        },
+        "activity": {
+          "name": "Answered quiz"
+        },
+        "course": {
+          "id": "https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/courses/<course-id>",
+          "name": "Reading G3"
+        }
+      },
+      "generated": {
+        "id": "https://your-app-url.com/ims/metrics/collections/activity/1",
+        "type": "TimebackActivityMetricsCollection",
+        "items": [
+          {
+            "type": "totalQuestions",
+            "value": 10
+          },
+          {
+            "type": "correctQuestions",
+            "value": 8
+          },
+          {
+            "type": "xpEarned",
+            "value": 100
+          },
+          {
+            "type": "masteredUnits",
+            "value": 2
+          }
+        ]
+      }
+    }
+
+    ```
+
+
+    ### Required Properties
+
+
+    - **type**: Always "TimebackActivityEvent"
+
+    - **actor**: The user performing the action (always a TimebackUser)
+
+    - **action**: The action that was performed by the user (for now we only
+    support "Completed")
+
+    - **object**: The activity being interacted with (TimebackActivityContext)
+
+    - **eventTime**: ISO 8601 timestamp when the event occurred
+
+    - **generated**: The collection of metrics collected in the activity
+    (TimebackActivityMetricsCollection)
+
+
+    ## 2. TimeSpentEvent
+
+
+    Used to record the time spent by the student in activities
+
+
+    ### Example
+
+
+    ```json
+
+    {
+      "id": "urn:uuid:c51570e4-f8ed-4c18-bb3a-dfe51b2cc594",
+      "eventTime": "2024-04-24T14:12:00.000Z",
+      "profile": "TimebackProfile",
+      "type": "TimeSpentEvent",
+      "actor": {
+        "id": "https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/users/<userId>",
+        "type": "TimebackUser",
+        "email": "student.email@example.com"
+      },
+      "action": "SpentTime",
+      "object": {
+        "id": "https://your-app-url.com/ims/activity/context",
+        "type": "TimebackActivityContext",
+        "subject": "Reading",
+        "app": {
+          "name": "PowerPath UI"
+        },
+        "activity": {
+          "name": "Answered quiz"
+        },
+        "course": {
+          "id": "https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/courses/<course-id>",
+          "name": "Reading G3"
+        }
+      },
+      "generated": {
+        "id": "https://your-app-url.com/ims/metrics/collections/activity/1",
+        "type": "TimebackTimeSpentMetricsCollection",
+        "items": [
+          {
+            "type": "active",
+            "value": 10
+          },
+          {
+            "type": "waste",
+            "value": 2,
+            "subType": "eating"
+          },
+          {
+            "type": "inactive",
+            "value": 2
+          },
+          {
+            "type": "unknown",
+            "value": 5
+          },
+          {
+            "type": "anti-pattern",
+            "value": 8
+          }
+        ]
+      }
+    }
+
+    ```
+
+
+    ### Required Properties
+
+
+    - **type**: Always "TimeSpentEvent"
+
+    - **actor**: The user performing the action (always a TimebackUser)
+
+    - **action**: The action that was performed by the user (for now we only
+    support "SpentTime")
+
+    - **object**: The activity being interacted with (TimebackActivityContext)
+
+    - **eventTime**: ISO 8601 timestamp when the event occurred
+
+    - **generated**: The collection of timespent metrics collected in the
+    activity (TimebackTimeSpentMetricsCollection)
+
+
+
+    # Examples
+
+
+    In the event endpoints described in this documentation there are various
+    examples
+
+    of how to send these activity and time spent events.
+
+
+    If your use-case isn't covered here please contact the timeback platform
+    team.
+
+
+    # Notes
+
+
+    - Timeback/Oneroster Entities
+        - If your app uses data (users, courses, resources, assessments...) from the Timeback platform APIs such as oneroster
+        - it is useful (though not required) to send the "**id**" of the entities in the timeback events as the url in **oneroster** to get the information for the specific entity
+        - Example: course (from oneroster) `https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/courses/<course-id-here>`
+
+    - ActivityContext
+        - In the activity context the "**course**" and "**activity**" fields are **optional**
+        - You should provide them whenever possible and only leave them empty if you don't have access to this information.
+
+
+    # Authentication
+
+
+    ## Guide
+
+
+    Most endpoints require authentication using the `Authorization: Bearer
+    <token>` header.
+
+
+    The token can be obtained with:
+
+
+    ```
+
+    curl -X POST
+    https://alpha-auth-production-idp.auth.us-west-2.amazoncognito.com/oauth2/token
+    \
+
+    -H "Content-Type: application/x-www-form-urlencoded" \
+
+    -d
+    "grant_type=client_credentials&client_id=<your-client-id>&client_secret=<your-client-secret>"
+
+    ```
+
+
+    Use the correct IDP server depending on the environment you're using:
+
+
+    - Production Server:
+      https://alpha-auth-production-idp.auth.us-west-2.amazoncognito.com
+    - Staging Server:
+      https://alpha-auth-development-idp.auth.us-west-2.amazoncognito.com
+
+    Reach out to the platform team to get a client/secret pair for your
+    application.
+servers:
+  - url: https://caliper.alpha-1edtech.com
+    description: Timeback Events API
+tags:
+  - name: Caliper Events
+    description: >-
+      These are the endpoints to use when submitting and validating Caliper
+      Events
+security:
+  - OAuth2: []
+paths:
+  /caliper/event:
+    post:
+      tags:
+        - Caliper Events
+      summary: Create Caliper Events
+      description: >-
+        Receives and processes Timeback events wrapped in an envelope. Events
+        will be validated against the IMS Caliper Analytics specification and
+        stored for further processing and analysis.
+      requestBody:
+        description: The Caliper envelope containing events to process
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Envelope'
+            examples:
+              example1: &ref_0
+                summary: 1 - ActivityEvent - XP Earned
+                description: >-
+                  Example of a basic Timeback Activity event where the user
+                  earns XP
+                value:
+                  sensor: https://alpharead.alpha.school
+                  sendTime: '2025-07-22T21:27:15.304Z'
+                  dataVersion: http://purl.imsglobal.org/ctx/caliper/v1p2
+                  data:
+                    - id: urn:uuid:c51570e4-f8ed-4c18-bb3a-dfe51b2cc594
+                      eventTime: '2024-04-24T14:12:00.000Z'
+                      profile: TimebackProfile
+                      type: ActivityEvent
+                      actor:
+                        id: >-
+                          https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/users/<user-id>
+                        type: TimebackUser
+                        email: student.email@example.com
+                      action: Completed
+                      object:
+                        id: https://your-app-url.com/ims/activity/context
+                        type: TimebackActivityContext
+                        subject: Reading
+                        app:
+                          name: PowerPath UI
+                        activity:
+                          name: Answered quiz
+                        course:
+                          id: >-
+                            https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/courses/<course-id>
+                          name: Reading G3
+                      generated:
+                        id: >-
+                          https://your-app-url.com/ims/metrics/collections/activity/1
+                        type: TimebackActivityMetricsCollection
+                        items:
+                          - type: xpEarned
+                            value: 100
+              example2: &ref_1
+                summary: 2 - ActivityEvent - Questions
+                description: >-
+                  Example of a basic Timeback Activity event where the user
+                  answers questions
+                value:
+                  sensor: https://alpharead.alpha.school
+                  sendTime: '2025-07-22T21:27:15.304Z'
+                  dataVersion: http://purl.imsglobal.org/ctx/caliper/v1p2
+                  data:
+                    - id: urn:uuid:c51570e4-f8ed-4c18-bb3a-dfe51b2cc594
+                      eventTime: '2024-04-24T14:12:00.000Z'
+                      profile: TimebackProfile
+                      type: ActivityEvent
+                      actor:
+                        id: >-
+                          https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/users/<userId>
+                        type: TimebackUser
+                        email: student.email@example.com
+                      action: Completed
+                      object:
+                        id: https://your-app-url.com/ims/activity/context
+                        type: TimebackActivityContext
+                        subject: Reading
+                        app:
+                          name: PowerPath UI
+                        activity:
+                          id: >-
+                            https://api.alpha-1edtech.com/ims/oneroster/resources/v1p2/resources/<sourcedId>
+                          name: PowerPath quiz
+                        course:
+                          name: Reading G3
+                      generated:
+                        id: >-
+                          https://your-app-url.com/ims/metrics/collections/activity/1
+                        type: TimebackActivityMetricsCollection
+                        items:
+                          - type: totalQuestions
+                            value: 10
+                          - type: correctQuestions
+                            value: 8
+              example3: &ref_2
+                summary: 3 - ActivityEvent - Mastered Units
+                description: >-
+                  Example of a basic Timeback Activity event where the user
+                  masters units
+                value:
+                  sensor: https://alpharead.alpha.school
+                  sendTime: '2025-07-22T21:27:15.304Z'
+                  dataVersion: http://purl.imsglobal.org/ctx/caliper/v1p2
+                  data:
+                    - id: urn:uuid:c51570e4-f8ed-4c18-bb3a-dfe51b2cc594
+                      eventTime: '2024-04-24T14:12:00.000Z'
+                      profile: TimebackProfile
+                      type: ActivityEvent
+                      actor:
+                        id: >-
+                          https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/users/<userId>
+                        type: TimebackUser
+                        email: student.email@example.com
+                      action: Completed
+                      object:
+                        id: https://your-app-url.com/ims/activity/context
+                        type: TimebackActivityContext
+                        subject: Reading
+                        app:
+                          name: PowerPath UI
+                        activity:
+                          id: >-
+                            https://api.alpha-1edtech.com/ims/oneroster/resources/v1p2/resources/<sourcedId>
+                          name: PowerPath quiz
+                        course:
+                          name: Reading G3
+                      generated:
+                        id: >-
+                          https://your-app-url.com/ims/metrics/collections/activity/1
+                        type: TimebackActivityMetricsCollection
+                        items:
+                          - type: masteredUnits
+                            value: 2
+              example4: &ref_3
+                summary: 4 - ActivityEvent - Slim
+                description: >-
+                  Example of a basic Timeback Activity event where the user
+                  answers questions, some attributes such as course and activity
+                  are ommited for brevity.
+                value:
+                  sensor: https://alpharead.alpha.school
+                  sendTime: '2025-07-22T21:27:15.304Z'
+                  dataVersion: http://purl.imsglobal.org/ctx/caliper/v1p2
+                  data:
+                    - id: urn:uuid:c51570e4-f8ed-4c18-bb3a-dfe51b2cc594
+                      eventTime: '2024-04-24T14:12:00.000Z'
+                      profile: TimebackProfile
+                      type: ActivityEvent
+                      actor:
+                        id: >-
+                          https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/users/<userId>
+                        type: TimebackUser
+                        email: student.email@example.com
+                      action: Completed
+                      object:
+                        id: https://your-app-url.com/ims/activity/context
+                        type: TimebackActivityContext
+                        subject: Reading
+                        app:
+                          name: PowerPath UI
+                      generated:
+                        id: >-
+                          https://your-app-url.com/ims/metrics/collections/activity/1
+                        type: TimebackActivityMetricsCollection
+                        items:
+                          - type: totalQuestions
+                            value: 10
+                          - type: correctQuestions
+                            value: 8
+                          - type: xpEarned
+                            value: 100
+                          - type: masteredUnits
+                            value: 2
+              example5: &ref_4
+                summary: 5 - TimeSpentEvent - Active
+                description: >-
+                  Example of a basic Timeback TimeSpent event where the user
+                  spent time on an activity
+                value:
+                  sensor: https://alpharead.alpha.school
+                  sendTime: '2025-07-22T21:27:15.304Z'
+                  dataVersion: http://purl.imsglobal.org/ctx/caliper/v1p2
+                  data:
+                    - id: urn:uuid:c51570e4-f8ed-4c18-bb3a-dfe51b2cc594
+                      eventTime: '2024-04-24T14:12:00.000Z'
+                      profile: TimebackProfile
+                      type: TimeSpentEvent
+                      actor:
+                        id: >-
+                          https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/users/<userId>
+                        type: TimebackUser
+                        email: student.email@example.com
+                      action: SpentTime
+                      object:
+                        id: https://your-app-url.com/ims/activity/context
+                        type: TimebackActivityContext
+                        subject: Reading
+                        app:
+                          name: PowerPath UI
+                        activity:
+                          name: Answered quiz
+                        course:
+                          id: >-
+                            https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/courses/<course-id>
+                          name: Reading G3
+                      generated:
+                        id: >-
+                          https://your-app-url.com/ims/metrics/collections/activity/1
+                        type: TimebackTimeSpentMetricsCollection
+                        items:
+                          - type: active
+                            value: 10
+              example6: &ref_5
+                summary: 6 - TimeSpentEvent - Inactive
+                description: >-
+                  Example of a basic Timeback TimeSpent event where the user was
+                  inactive during the activity
+                value:
+                  sensor: https://alpharead.alpha.school
+                  sendTime: '2025-07-22T21:27:15.304Z'
+                  dataVersion: http://purl.imsglobal.org/ctx/caliper/v1p2
+                  data:
+                    - id: urn:uuid:c51570e4-f8ed-4c18-bb3a-dfe51b2cc594
+                      eventTime: '2024-04-24T14:12:00.000Z'
+                      profile: TimebackProfile
+                      type: TimeSpentEvent
+                      actor:
+                        id: >-
+                          https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/users/<userId>
+                        type: TimebackUser
+                        email: student.email@example.com
+                      action: SpentTime
+                      object:
+                        id: https://your-app-url.com/ims/activity/context
+                        type: TimebackActivityContext
+                        subject: Reading
+                        app:
+                          name: PowerPath UI
+                        activity:
+                          name: Answered quiz
+                        course:
+                          id: >-
+                            https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/courses/<course-id>
+                          name: Reading G3
+                      generated:
+                        id: >-
+                          https://your-app-url.com/ims/metrics/collections/activity/1
+                        type: TimebackTimeSpentMetricsCollection
+                        items:
+                          - type: inactive
+                            value: 10
+              example7: &ref_6
+                summary: 7 - TimeSpentEvent - Waste
+                description: >-
+                  Example of a basic Timeback TimeSpent event where the user
+                  wasted time on an activity
+                value:
+                  sensor: https://alpharead.alpha.school
+                  sendTime: '2025-07-22T21:27:15.304Z'
+                  dataVersion: http://purl.imsglobal.org/ctx/caliper/v1p2
+                  data:
+                    - id: urn:uuid:c51570e4-f8ed-4c18-bb3a-dfe51b2cc594
+                      eventTime: '2024-04-24T14:12:00.000Z'
+                      profile: TimebackProfile
+                      type: TimeSpentEvent
+                      actor:
+                        id: >-
+                          https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/users/<userId>
+                        type: TimebackUser
+                        email: student.email@example.com
+                      action: SpentTime
+                      object:
+                        id: https://your-app-url.com/ims/activity/context
+                        type: TimebackActivityContext
+                        subject: Reading
+                        app:
+                          name: PowerPath UI
+                        activity:
+                          name: Answered quiz
+                        course:
+                          id: >-
+                            https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/courses/<course-id>
+                          name: Reading G3
+                      generated:
+                        id: >-
+                          https://your-app-url.com/ims/metrics/collections/activity/1
+                        type: TimebackTimeSpentMetricsCollection
+                        items:
+                          - type: waste
+                            value: 10
+                            subType: eating
+              example8: &ref_7
+                summary: 8 - TimeSpentEvent - Slim
+                description: >-
+                  Example of a basic Timeback TimeSpent event where the user
+                  spent time on an activity, 
+
+                  some attributes such as course and activity are ommited for
+                  brevity.
+                value:
+                  sensor: https://alpharead.alpha.school
+                  sendTime: '2025-07-22T21:27:15.304Z'
+                  dataVersion: http://purl.imsglobal.org/ctx/caliper/v1p2
+                  data:
+                    - id: urn:uuid:c51570e4-f8ed-4c18-bb3a-dfe51b2cc594
+                      eventTime: '2024-04-24T14:12:00.000Z'
+                      profile: TimebackProfile
+                      type: TimeSpentEvent
+                      actor:
+                        id: >-
+                          https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/users/<userId>
+                        type: TimebackUser
+                        email: student.email@example.com
+                      action: SpentTime
+                      object:
+                        id: https://your-app-url.com/ims/activity/context
+                        type: TimebackActivityContext
+                        subject: Reading
+                        app:
+                          name: PowerPath UI
+                      generated:
+                        id: >-
+                          https://your-app-url.com/ims/metrics/collections/activity/1
+                        type: TimebackTimeSpentMetricsCollection
+                        items:
+                          - type: active
+                            value: 10
+                          - type: waste
+                            value: 2
+                            subType: eating
+                          - type: inactive
+                            value: 2
+      responses:
+        '200':
+          description: The events were processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    const: success
+                  message:
+                    type: string
+                  errors: {}
+                required:
+                  - status
+                  - message
+        '400':
+          description: The request payload is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    const: error
+                  message:
+                    type: string
+                  errors: {}
+                required:
+                  - status
+                  - message
+  /caliper/event/validate:
+    post:
+      tags:
+        - Caliper Events
+      summary: Validate Caliper Events
+      description: >-
+        This endpoint is useful to prepare the event payload before sending them
+        to the ingestion endpoint.
+
+        When you send an event via this endpoint it will only be validated and
+        not stored.
+      requestBody:
+        description: The Caliper envelope containing events to validate
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Envelope'
+            examples:
+              example1: *ref_0
+              example2: *ref_1
+              example3: *ref_2
+              example4: *ref_3
+              example5: *ref_4
+              example6: *ref_5
+              example7: *ref_6
+              example8: *ref_7
+      responses:
+        '200':
+          description: The request payload is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    const: success
+                  message:
+                    type: string
+                  errors: {}
+                required:
+                  - status
+                  - message
+        '400':
+          description: The request payload is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    const: error
+                  message:
+                    type: string
+                  errors: {}
+                required:
+                  - status
+                  - message
+components:
+  securitySchemes:
+    MCP:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: >-
+            https://alpha-auth-production-idp.auth.us-west-2.amazoncognito.com/oauth2/authorize
+          tokenUrl: >-
+            https://alpha-auth-production-idp.auth.us-west-2.amazoncognito.com/oauth2/token
+          scopes:
+            https://purl.imsglobal.org/spec/caliper/v1p1/scope/webhook.readonly: Webhook readonly scope (can read webhooks)
+    OAuth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          scopes:
+            https://purl.imsglobal.org/spec/caliper/v1p1/scope/admin: Admin scope (can call all endpoints)
+            https://purl.imsglobal.org/spec/caliper/v1p1/scope/webhook.create: Webhook create scope (can create and update webhooks)
+            https://purl.imsglobal.org/spec/caliper/v1p1/scope/webhook.readonly: Webhook readonly scope (can read webhooks)
+            https://purl.imsglobal.org/spec/caliper/v1p1/scope/event.create: Event create scope (can create events)
+          tokenUrl: >-
+            https://alpha-auth-production-idp.auth.us-west-2.amazoncognito.com/oauth2/token
+  schemas:
+    Envelope:
+      type: object
+      properties:
+        sensor:
+          type: string
+          format: uri
+          description: >-
+            The sensor.id that uniquely identifies the Caliper Sensor. Should be
+            in the form of an IRI
+          example: https://example.edu/sensors/1
+        sendTime:
+          type: string
+          format: date-time
+          description: >-
+            The time the data was sent, formatted as an ISO 8601 date and time
+            in UTC
+          example: '2023-08-15T14:12:00.000Z'
+        dataVersion:
+          type: string
+          const: http://purl.imsglobal.org/ctx/caliper/v1p2
+          description: >-
+            The data format version. Indicates which version of the Caliper
+            specification governs the form of the entities and events
+          example: http://purl.imsglobal.org/ctx/caliper/v1p2
+        data:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/Event'
+              - $ref: '#/components/schemas/Entity'
+          minItems: 1
+          description: >-
+            The data payload, consisting of an array where items are Caliper
+            Events or Entities
+          example:
+            - id: urn:uuid:c51570e4-f8ed-4c18-bb3a-dfe51b2cc594
+              type: Event
+              actor: https://example.edu/users/554433
+              action: Created
+              object: >-
+                https://example.edu/terms/201801/courses/7/sections/1/assignments/1
+              eventTime: '2023-08-15T14:12:00.000Z'
+      required:
+        - sensor
+        - sendTime
+        - dataVersion
+        - data
+      description: |-
+        # Envelope
+
+        Represents a package containing events and entity data for ingestion
+    Event:
+      type: object
+      properties:
+        '@context':
+          type: string
+          format: uri
+          default: http://purl.imsglobal.org/ctx/caliper/v1p2
+          description: The context of the Caliper entity data
+          example: http://purl.imsglobal.org/ctx/caliper/v1p2
+        id:
+          type: string
+          pattern: ^urn:uuid:(.*)$
+          description: Unique identifier for this event. Must be a UUID expressed as a URN
+          example: urn:uuid:c51570e4-f8ed-4c18-bb3a-dfe51b2cc594
+        type:
+          type: string
+          description: >-
+            The type of this event. Must match the term specified in the Caliper
+            information model
+          example: Event
+        actor:
+          type:
+            - string
+            - object
+          description: The agent who initiated the event
+          example: https://example.edu/users/554433
+        action:
+          type: string
+          description: The action or predicate that binds the actor to the object
+          example: Created
+        object:
+          type:
+            - string
+            - object
+          description: The object of the interaction
+          example: https://example.edu/terms/201801/courses/7/sections/1/assignments/1
+        eventTime:
+          type: string
+          format: date-time
+          description: ISO 8601 datetime when this event occurred
+          example: '2023-08-15T14:12:00.000Z'
+        profile:
+          allOf:
+            - $ref: '#/components/schemas/AllProfiles'
+          description: The profile that governs interpretation of this event
+          example: AnnotationProfile
+        edApp:
+          type: &ref_9
+            - string
+            - object
+          description: The application context
+          example: https://example.edu/apps/learning-management
+        generated:
+          type:
+            - string
+            - object
+          description: Entity generated as a result of the interaction
+          example: https://example.edu/users/554433/responses/1
+        target:
+          type: &ref_10
+            - string
+            - object
+          description: >-
+            Entity that represents a particular segment or location within the
+            object
+          example: >-
+            https://example.edu/terms/201801/courses/7/sections/1/assignments/1/items/1
+        referrer:
+          type: &ref_11
+            - string
+            - object
+          description: Entity that represents the referring context
+          example: https://example.edu/terms/201801/courses/7/sections/1
+        group:
+          type: &ref_12
+            - string
+            - object
+          description: >-
+            An Organization that represents the group context. Can be either a
+            URI or an Organization entity object
+          example: &ref_13
+            id: https://example.edu/terms/201801/courses/7/sections/1
+            type: Organization
+            extensions:
+              info: other params should follow organization schema
+        membership:
+          type: &ref_14
+            - string
+            - object
+          description: >-
+            The relationship between the action and the group in terms of roles
+            and status
+          example: https://example.edu/terms/201801/courses/7/sections/1/rosters/1
+        session:
+          type: &ref_15
+            - string
+            - object
+          description: The current user Session
+          example: >-
+            https://example.edu/sessions/1f6442a482de72ea6ad134943812bff564a76259
+        federatedSession:
+          type: &ref_16
+            - string
+            - object
+          description: >-
+            If the Event occurs within the context of an LTI platform launch,
+            the tool's LtiSession
+          example: https://example.edu/lti-sessions/b533eb02823f31024765305dd3af7b5e
+        extensions:
+          type: object
+          additionalProperties: {}
+          description: Additional attributes not defined by the model
+          example: &ref_17
+            customField: customValue
+      required:
+        - id
+        - type
+        - actor
+        - action
+        - object
+        - eventTime
+        - profile
+      additionalProperties: false
+      description: |-
+        # Event
+
+        Represents a Caliper Event that describes learning activities
+    TimebackUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uri
+          description: The unique identifier for the actor
+          example: >-
+            https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/users/<userId>
+        type:
+          type: string
+          const: TimebackUser
+          description: The type of this user. Must be set to 'TimebackUser'
+          example: TimebackUser
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum:
+            - student
+            - teacher
+            - admin
+            - guide
+        extensions:
+          type: object
+          additionalProperties: {}
+          description: Additional attributes not defined by the model
+          example: &ref_8
+            customField: customValue
+      required:
+        - id
+        - type
+        - email
+      additionalProperties: false
+      description: >-
+        # TimebackUser
+
+
+        Represents a user in the context of the Timeback application.
+
+
+        If possible, always send the user id as the oneroster url to get the
+        user information.
+
+
+        If the oneroster url is not available, send the user id as a url with
+        your application base url.
+
+
+        Example:
+        https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/users/123
+    TimebackActivityContext:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uri
+        type:
+          type: string
+          const: TimebackActivityContext
+        subject:
+          type: string
+          enum:
+            - Science
+            - Math
+            - Reading
+            - Language
+            - Social Studies
+            - None
+        app:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uri
+            name:
+              type: string
+            extensions:
+              type: object
+              additionalProperties: {}
+              description: Additional attributes not defined by the model
+              example: *ref_8
+          required:
+            - name
+          description: The application where the event was recorded
+          example:
+            id: https://your.app.url
+            name: Example App
+        course:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uri
+            name:
+              type: string
+            extensions:
+              type: object
+              additionalProperties: {}
+              description: Additional attributes not defined by the model
+              example: *ref_8
+          required:
+            - name
+          description: The course where the event was recorded
+          example:
+            id: >-
+              https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/courses/<courseSourcedId>
+            name: Example Course
+        activity:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uri
+            name:
+              type: string
+            extensions:
+              type: object
+              additionalProperties: {}
+              description: Additional attributes not defined by the model
+              example: *ref_8
+          required:
+            - name
+          description: The activity where the event was recorded
+          example:
+            id: >-
+              https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/courses/components/<componentSourcedId>
+            name: Example Activity
+      required:
+        - id
+        - type
+        - subject
+        - app
+      description: >-
+        # TimebackActivityContext
+
+
+        Represents the context of the activity where the event was recorded.
+
+
+        This context represents a unified interface for third parties users of
+        the timeback platform apis to send student metrics.
+
+
+        These metrics can be processed in an ETL layer to create a unified view
+        of student metrics in different applications.
+    TimebackActivityEvent:
+      oneOf:
+        - $ref: '#/components/schemas/TimebackActivityCompletedEvent'
+      discriminator:
+        propertyName: action
+        mapping:
+          Completed: '#/components/schemas/TimebackActivityCompletedEvent'
+      description: >
+        # TimebackActivityEvent
+
+
+        Represents an activity event in the context of the Timeback application.
+
+
+        This event is used to track the completion of an activity.   
+
+
+        The object of this event is the activity context where the event was
+        recorded.
+
+
+        The actor of this event is the timeback user who completed the activity.
+
+
+        The event requires a generated metrics attribute to work.
+
+
+        For now we only support "**Completed**" as an action. In the future we
+        may support other actions.
+    TimebackTimeSpentEvent:
+      type: object
+      properties:
+        '@context':
+          type: string
+          format: uri
+          default: http://purl.imsglobal.org/ctx/caliper/v1p2
+          description: The context of the Caliper entity data
+          example: http://purl.imsglobal.org/ctx/caliper/v1p2
+        id:
+          type: string
+          pattern: ^urn:uuid:(.*)$
+          description: Unique identifier for this event. Must be a UUID expressed as a URN
+          example: urn:uuid:c51570e4-f8ed-4c18-bb3a-dfe51b2cc594
+        type:
+          type: string
+          const: TimeSpentEvent
+        actor:
+          $ref: '#/components/schemas/TimebackUser'
+        action:
+          type: string
+          const: SpentTime
+        object:
+          $ref: '#/components/schemas/TimebackActivityContext'
+        eventTime:
+          type: string
+          format: date-time
+          description: ISO 8601 datetime when this event occurred
+          example: '2023-08-15T14:12:00.000Z'
+        profile:
+          type: string
+          const: TimebackProfile
+          description: The profile that governs interpretation of this event
+          example: TimebackProfile
+        edApp:
+          type: *ref_9
+          description: The application context
+          example: https://example.edu/apps/learning-management
+        generated:
+          $ref: '#/components/schemas/TimebackTimeSpentMetricsCollection'
+        target:
+          type: *ref_10
+          description: >-
+            Entity that represents a particular segment or location within the
+            object
+          example: >-
+            https://example.edu/terms/201801/courses/7/sections/1/assignments/1/items/1
+        referrer:
+          type: *ref_11
+          description: Entity that represents the referring context
+          example: https://example.edu/terms/201801/courses/7/sections/1
+        group:
+          type: *ref_12
+          description: >-
+            An Organization that represents the group context. Can be either a
+            URI or an Organization entity object
+          example: *ref_13
+        membership:
+          type: *ref_14
+          description: >-
+            The relationship between the action and the group in terms of roles
+            and status
+          example: https://example.edu/terms/201801/courses/7/sections/1/rosters/1
+        session:
+          type: *ref_15
+          description: The current user Session
+          example: >-
+            https://example.edu/sessions/1f6442a482de72ea6ad134943812bff564a76259
+        federatedSession:
+          type: *ref_16
+          description: >-
+            If the Event occurs within the context of an LTI platform launch,
+            the tool's LtiSession
+          example: https://example.edu/lti-sessions/b533eb02823f31024765305dd3af7b5e
+        extensions:
+          type: object
+          additionalProperties: {}
+          description: Additional attributes not defined by the model
+          example: *ref_17
+      required:
+        - '@context'
+        - id
+        - type
+        - actor
+        - action
+        - object
+        - eventTime
+        - profile
+        - generated
+      description: >
+        # TimebackTimeSpentEvent
+
+
+        Represents a student time spent activity in the context of an app using
+        the timeback platform.
+
+
+        This event is used to track the time spent and the quality of the time
+        spent by a student on an activity.
+
+
+        The object of this event is the activity context where the event was
+        recorded.
+
+
+        The actor of this event is the timeback user who spent time on the
+        activity.
+
+
+        The event requires a generated metrics attribute to work.
+
+
+        The metrics can indicate a parent type of metric:  'active' | 'inactive'
+        | 'waste'
+
+
+        A subType is also included for more specific representation of the
+        activity recorded.
+    AllProfiles:
+      type: string
+      enum:
+        - AnnotationProfile
+        - AssessmentProfile
+        - ToolUseProfile
+        - GeneralProfile
+        - FeedbackProfile
+        - MediaProfile
+        - SurveyProfile
+        - ResourceManagementProfile
+        - ForumProfile
+        - AssignableProfile
+        - GradingProfile
+        - ReadingProfile
+        - SessionProfile
+        - SearchProfile
+        - ToolLaunchProfile
+        - TimebackProfile
+      description: >-
+        # Supported Profiles
+
+
+        These are the profiles that this API currently supports.
+
+
+        See the
+        [specification](https://www.imsglobal.org/spec/caliper/v1p2#profiles-0)
+        for a list of all profiles.
+    Entity:
+      type: object
+      properties:
+        '@context':
+          type: string
+          format: uri
+          default: http://purl.imsglobal.org/ctx/caliper/v1p2
+          description: The context of the Caliper entity data
+          example: http://purl.imsglobal.org/ctx/caliper/v1p2
+        id:
+          type: string
+          format: uri
+          description: >-
+            The unique identifier for this entity. Must be a valid IRI and
+            should be dereferenceable
+          example: https://example.edu/entity/554433
+        type:
+          type: string
+          description: >-
+            The type of this entity. Must match the term specified in the
+            Caliper information model
+          example: Entity
+        name:
+          type: string
+          description: A word or phrase by which the entity is known
+          example: John Doe
+        description:
+          type: string
+          description: A brief, written representation of the entity
+          example: A student at Example University
+        dateCreated:
+          type: string
+          format: date-time
+          description: ISO 8601 datetime when this entity was created
+          example: '2023-08-15T14:12:00.000Z'
+        dateModified:
+          type: string
+          format: date-time
+          description: ISO 8601 datetime when this entity was last modified
+          example: '2023-08-15T14:12:00.000Z'
+        extensions:
+          type: object
+          additionalProperties: {}
+          description: Additional attributes not defined by the model
+          example: *ref_8
+        otherIdentifiers:
+          type: array
+          items:
+            type:
+              - string
+              - object
+      required:
+        - id
+        - type
+      additionalProperties: false
+      description: >-
+        # Entity
+
+
+        Represents a generic Caliper Entity that participates in
+        learning-related activities.
+
+        Can be provided in an envelope for context.
+    TimebackActivityCompletedEvent:
+      type: object
+      properties:
+        '@context':
+          type: string
+          format: uri
+          default: http://purl.imsglobal.org/ctx/caliper/v1p2
+          description: The context of the Caliper entity data
+          example: http://purl.imsglobal.org/ctx/caliper/v1p2
+        id:
+          type: string
+          pattern: ^urn:uuid:(.*)$
+          description: Unique identifier for this event. Must be a UUID expressed as a URN
+          example: urn:uuid:c51570e4-f8ed-4c18-bb3a-dfe51b2cc594
+        type:
+          type: string
+          const: ActivityEvent
+        actor:
+          $ref: '#/components/schemas/TimebackUser'
+        action:
+          type: string
+          const: Completed
+        object:
+          $ref: '#/components/schemas/TimebackActivityContext'
+        eventTime:
+          type: string
+          format: date-time
+          description: ISO 8601 datetime when this event occurred
+          example: '2023-08-15T14:12:00.000Z'
+        profile:
+          type: string
+          const: TimebackProfile
+          description: The profile that governs interpretation of this event
+          example: TimebackProfile
+        edApp:
+          type: *ref_9
+          description: The application context
+          example: https://example.edu/apps/learning-management
+        generated:
+          $ref: '#/components/schemas/TimebackActivityMetricsCollection'
+        target:
+          type: *ref_10
+          description: >-
+            Entity that represents a particular segment or location within the
+            object
+          example: >-
+            https://example.edu/terms/201801/courses/7/sections/1/assignments/1/items/1
+        referrer:
+          type: *ref_11
+          description: Entity that represents the referring context
+          example: https://example.edu/terms/201801/courses/7/sections/1
+        group:
+          type: *ref_12
+          description: >-
+            An Organization that represents the group context. Can be either a
+            URI or an Organization entity object
+          example: *ref_13
+        membership:
+          type: *ref_14
+          description: >-
+            The relationship between the action and the group in terms of roles
+            and status
+          example: https://example.edu/terms/201801/courses/7/sections/1/rosters/1
+        session:
+          type: *ref_15
+          description: The current user Session
+          example: >-
+            https://example.edu/sessions/1f6442a482de72ea6ad134943812bff564a76259
+        federatedSession:
+          type: *ref_16
+          description: >-
+            If the Event occurs within the context of an LTI platform launch,
+            the tool's LtiSession
+          example: https://example.edu/lti-sessions/b533eb02823f31024765305dd3af7b5e
+        extensions:
+          type: object
+          additionalProperties: {}
+          description: Additional attributes not defined by the model
+          example: *ref_17
+      required:
+        - '@context'
+        - id
+        - type
+        - actor
+        - action
+        - object
+        - eventTime
+        - profile
+        - generated
+    TimebackActivityMetricsCollection:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uri
+          description: The unique identifier for the collection
+          example: >-
+            https://api.alpha-1edtech.com/ims/oneroster/rostering/v1p2/collections/1
+        type:
+          type: string
+          const: TimebackActivityMetricsCollection
+          description: The type of the collection
+          example: TimebackActivityMetricsCollection
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimebackActivityMetric'
+        extensions:
+          type: object
+          additionalProperties: {}
+          description: Additional attributes not defined by the model
+          example: *ref_8
+      required:
+        - id
+        - type
+        - items
+      description: >
+        # TimebackActivityMetricsCollection
+
+
+        Represents a collection of activity metrics.
+
+
+        The collection is used to store the metrics for a student's activity.
+
+
+        Supported metrics: xpEarned, totalQuestions, correctQuestions,
+        masteredUnits
+
+
+        You can send an event with multiple metrics at once.
+    TimebackActivityMetric:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - xpEarned
+            - totalQuestions
+            - correctQuestions
+            - masteredUnits
+        value:
+          type: number
+        extensions:
+          type: object
+          additionalProperties: {}
+          description: Additional attributes not defined by the model
+          example: *ref_8
+      required:
+        - type
+        - value
+      description: >
+        # TimebackActivityMetric
+
+
+        Represents a metric for an activity.
+
+
+        Each metric represents a single metric for a student's activity.
+
+
+        Supported metrics: xpEarned, totalQuestions, correctQuestions,
+        masteredUnits
+    TimebackTimeSpentMetricsCollection:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uri
+          description: The unique identifier for the collection
+          example: https://your-api-endpoint/collections/1
+        type:
+          type: string
+          const: TimebackTimeSpentMetricsCollection
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSpentMetric'
+        extensions:
+          type: object
+          additionalProperties: {}
+          description: Additional attributes not defined by the model
+          example: *ref_8
+      required:
+        - id
+        - type
+        - items
+      description: |
+        # TimebackTimeSpentMetricsCollection
+
+        Represents a collection of time spent metrics.
+
+        Supported types: active, inactive, waste, unknown, anti-pattern
+    TimeSpentMetric:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - active
+            - inactive
+            - waste
+            - unknown
+            - anti-pattern
+        subType:
+          type: string
+        value:
+          type: number
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        extensions:
+          type: object
+          additionalProperties: {}
+          description: Additional attributes not defined by the model
+          example: *ref_8
+      required:
+        - type
+        - value
+      description: |
+        # TimeSpentMetric
+
+        Represents a time spent metric.
+
+        Supported types: active, inactive, waste, unknown, anti-pattern

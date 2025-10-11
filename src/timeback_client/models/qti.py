@@ -260,22 +260,21 @@ class QTIAssessmentItem(BaseModel):
     
     The key fields required per the QTI DDL documentation are:
     - identifier: A unique code identifying the item
-    - title: The name of the item
-    - type: Type of question/interaction
-    - interaction: The interaction object based on the type
-    - responseDeclarations: Array of response declarations
+    - title: The name of the item (optional when rawXml is provided)
+    - type: Type of question/interaction (optional when rawXml is provided)
+    - interaction: The interaction object based on the type (optional when rawXml is provided)
+    - responseDeclarations: Array of response declarations (optional when rawXml is provided)
     
-    Note that while rawXml is shown as required in the QTI DDL documentation,
-    the API examples and validation schemas indicate that JSON submissions
-    are supported without XML.
+    When updating via rawXml, only identifier and rawXml are required.
+    The API will parse the XML and populate other fields automatically.
     """
     identifier: str
-    title: str
-    type: str
+    title: Optional[str] = None
+    type: Optional[str] = None
     preInteraction: Optional[str] = None
     postInteraction: Optional[str] = None  # Added based on example for text-entry
-    interaction: QTIInteraction
-    responseDeclarations: List[QTIResponseDeclaration]
+    interaction: Optional[QTIInteraction] = None
+    responseDeclarations: Optional[List[QTIResponseDeclaration]] = None
     outcomeDeclarations: Optional[List[QTIOutcomeDeclaration]] = None
     responseProcessing: Optional[QTIResponseProcessing] = None
     feedbackBlock: Optional[List[QTIFeedbackBlock]] = None
@@ -293,8 +292,10 @@ class QTIAssessmentItem(BaseModel):
     qtiVersion: Optional[str] = Field(None, description="Version of QTI standard (default: '3.0')")
     
     @field_serializer('interaction')
-    def serialize_interaction(self, interaction: QTIInteraction, _info):
+    def serialize_interaction(self, interaction: Optional[QTIInteraction], _info):
         """Ensure interaction type is properly set if not already."""
+        if interaction is None:
+            return None
         data = interaction.model_dump(by_alias=True)
         if 'type' not in data and hasattr(self, 'type'):
             # If type is missing in interaction but available at item level, use that

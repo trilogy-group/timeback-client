@@ -59,6 +59,11 @@ class AssessmentItemsAPI(TimeBackService):
             "Accept": "application/json"
         }
         
+        # Add authorization if credentials are provided
+        token = self._get_auth_token()
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        
         logger.info("Making request to %s", url)
         logger.info("Method: %s", method)
         logger.info("Data: %s", data)
@@ -226,7 +231,10 @@ class AssessmentItemsAPI(TimeBackService):
         
         Args:
             identifier: The identifier of the assessment item to update
-            assessment_item: The updated assessment item data
+            assessment_item: The updated assessment item data. Can be:
+                - QTIAssessmentItem model instance (JSON format)
+                - Dict with format="xml" and xml="<qti-assessment-item>..." (XML format)
+                - Dict with QTI fields (JSON format)
             
         Returns:
             The updated assessment item
@@ -236,11 +244,16 @@ class AssessmentItemsAPI(TimeBackService):
         """
         endpoint = f"/assessment-items/{identifier}"
         
-        # Convert to model if it's a dict
-        if isinstance(assessment_item, dict):
+        # If it's a dict with format="xml", send it directly without Pydantic validation
+        if isinstance(assessment_item, dict) and assessment_item.get('format') == 'xml':
+            data = assessment_item
+        elif isinstance(assessment_item, dict):
+            # Convert to model for validation
             assessment_item = QTIAssessmentItem(**assessment_item)
-        
-        data = assessment_item.model_dump(by_alias=True)
+            data = assessment_item.model_dump(by_alias=True)
+        else:
+            # Already a model instance
+            data = assessment_item.model_dump(by_alias=True)
         
         return self._make_request(endpoint, method="PUT", data=data)
     
