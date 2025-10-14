@@ -344,8 +344,11 @@ class GradebookService(TimeBackService):
         """Load Gradebook API modules."""
         try:
             from ..api.assessment_results import AssessmentResultsAPI
+            from ..api.line_items import LineItemsAPI
             # Register assessment results API
             self._api_registry["assessment_results"] = AssessmentResultsAPI(self.base_url, self.client_id, self.client_secret)
+            # Register line items API
+            self._api_registry["line_items"] = LineItemsAPI(self.base_url, self.client_id, self.client_secret)
         except ImportError as e:
             logger.error(f"Could not import Gradebook API modules: {e}")
             
