@@ -284,4 +284,37 @@ class EnrollmentsAPI(TimeBackService):
             sort=sort,
             order_by=order_by,
             fields=fields
-        ) 
+        )
+
+    def reset_progress(self, user_id: str, course_id: str) -> Dict[str, Any]:
+        """Reset a student's progress in a course by deleting all assessment results.
+
+        This calls the edubridge API endpoint to delete all progress data
+        for a specific student in a specific course.
+
+        Args:
+            user_id: The student's user ID (sourcedId)
+            course_id: The course ID (sourcedId)
+
+        Returns:
+            Dictionary containing the API response
+
+        Raises:
+            requests.exceptions.HTTPError: If the API request fails
+        """
+        logger.info(f"Resetting progress for user {user_id} in course {course_id}")
+
+        # Use edubridge service instead of rostering
+        # Temporarily override api_path for this request
+        original_api_path = self.api_path
+        self.api_path = "/edubridge"
+
+        try:
+            result = self._make_request(
+                endpoint=f"/enrollments/resetProgress/{user_id}/{course_id}",
+                method="DELETE"
+            )
+            return result
+        finally:
+            # Restore original api_path
+            self.api_path = original_api_path 

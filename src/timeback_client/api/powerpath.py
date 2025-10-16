@@ -222,17 +222,17 @@ class PowerPathAPI(TimeBackService):
         
     def delete_lesson_plan(self, lesson_plan_id: str) -> Dict[str, Any]:
         """Delete a specific lesson plan.
-        
+
         This will permanently remove a student's lesson plan. This is a destructive
         action and should be used with caution. It will also remove associated
         progress data for that lesson plan.
-        
+
         Args:
             lesson_plan_id: The unique identifier of the lesson plan to delete.
-            
+
         Returns:
             Dict containing the response from the API, typically a success message.
-            
+
         Raises:
             requests.exceptions.HTTPError: If deletion fails, e.g., lesson plan not found (404).
         """
@@ -240,6 +240,27 @@ class PowerPathAPI(TimeBackService):
         return self._make_request(
             endpoint=f"/lessonPlans/{lesson_plan_id}",
             method="DELETE"
+        )
+
+    def sync_lesson_plans_for_course(self, course_id: str) -> Dict[str, Any]:
+        """Sync lesson plans for all students in a course.
+
+        This endpoint updates all student lesson plans with the latest changes
+        from the course structure.
+
+        Args:
+            course_id: The unique identifier of the course
+
+        Returns:
+            Dict containing the response from the API
+
+        Raises:
+            requests.exceptions.HTTPError: If course not found (404) or other API error
+        """
+        logger.info(f"Syncing lesson plans for course {course_id}")
+        return self._make_request(
+            endpoint=f"/lessonPlans/course/{course_id}/sync",
+            method="POST"
         )
         
     def update_lesson_plan_item(

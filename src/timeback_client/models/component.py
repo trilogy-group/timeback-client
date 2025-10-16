@@ -45,6 +45,7 @@ class Component:
         dateLastModified: str = None,
         course: Dict[str, Any] = None,  # Required
         courseComponent: Optional[Dict[str, Any]] = None,
+        parent: Optional[Dict[str, Any]] = None,  # Alias for courseComponent
         sortOrder: int = None,  # Required
         prerequisites: Optional[List[str]] = None,
         prerequisiteCriteria: Optional[str] = None,
@@ -107,11 +108,19 @@ class Component:
             self.dateLastModified = dateLastModified
         
         # Set optional fields
+        # Handle parent field as alias for courseComponent (OneRoster uses 'parent', but we support both)
+        if parent and not courseComponent:
+            courseComponent = parent
+        elif parent and courseComponent:
+            logger.warning(f"Both 'parent' and 'courseComponent' provided - using 'parent'")
+            courseComponent = parent
+
         self.courseComponent = self._validate_reference(courseComponent, 'courseComponent')
+        self.parent = self.courseComponent  # Keep parent as alias
         self.prerequisites = prerequisites or []
         self.prerequisiteCriteria = prerequisiteCriteria
         self.unlockDate = unlockDate
-        
+
         # Handle metadata
         self.metadata = metadata or {}
         if kwargs:
@@ -266,8 +275,9 @@ class Component:
         }
         
         # Add optional fields if they have values
+        # Use 'parent' field (OneRoster standard) instead of 'courseComponent'
         if self.courseComponent:
-            result['courseComponent'] = self.courseComponent
+            result['parent'] = self.courseComponent
         if self.prerequisites:
             result['prerequisites'] = self.prerequisites
         if self.prerequisiteCriteria:
